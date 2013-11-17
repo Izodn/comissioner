@@ -1,13 +1,11 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/environmentVars.php';
 	if(!isset($_SESSION)) {
 		session_start();
 	}
-	$file = file($_SERVER['DOCUMENT_ROOT'].'/_/environment.txt');
-	if(!$file)
-	{
-		die('Could not start environment');
-	}
-	foreach($file as $a)
+	$envVars = getEnvVars();
+	$envVarArr = explode("\n", $envVars);
+	foreach($envVarArr as $a)
 	{
 		if( $a[0] !== "#" ) //If not comment
 		{
