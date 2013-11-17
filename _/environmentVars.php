@@ -1,3 +1,6 @@
+<?php
+	function getEnvVars() {
+		$env = <<<ENV
 DATABASE_LOCATION => localhost
 DATABASE => TEST_DB
 USER => TEST_USER
@@ -9,3 +12,7 @@ ERROR_REPORTING => 1
 OutputBuffer => 1
 DebugMode => 0
 TrackPages => 1
+ENV;
+		return $env;
+	}
+?>
