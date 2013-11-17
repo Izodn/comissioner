@@ -1,6 +1,20 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/dbh.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/credentialCheck.php';
 	global $dbh;
+	if( !isset($_SESSION['databaseOk']) ) {
+		//Start check to see if the database needs setup for the first time
+		$runQuery = $dbh->prepare("SELECT count(*) rowCount FROM user_account");
+		$runQuery->execute();
+		$result = $runQuery->fetch(PDO::FETCH_BOTH);
+		if($result['rowCount'] === "0") {
+			header("Location: Register.php");
+		}
+		else {
+			$_SESSION['databaseOK'] = true;
+		}
+		//End database check
+	}
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/lockdown.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/errorLog.php';
 	function superuserLocation()
@@ -8,7 +22,6 @@
 		$url = array(
 			//SUPERUSER ONLY URLS
 			'/ipIndex.php',
-			'/Register.php',
 			'/SQL.php',
 			'/userDetail.php',
 			'/userManagement.php',
@@ -104,83 +117,13 @@
 			'/_/include/pageBuilder.php',
 			'/privacyPolicy.php',
 			'/gallery.php',
-			'/gallery2.php'
+			'/gallery2.php',
+			'/Register.php'
 		);
 		$curURL = $_SERVER['PHP_SELF'];
 		if(in_array($curURL, $url))
 		{
 			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	function credentialCheck($type = '') // "if(!credentialCheck($var))" shouldn't be used
-	{
-		global $dbh;
-		if(strtolower($type) === strtolower('user'))
-		{
-			$query = "
-				SELECT
-					CUSERNAME,
-					CPASSWORD,
-					CPASSWORD2,
-					IISACTIVE
-				FROM
-					user_account
-				WHERE
-					IUSERID = ? AND
-					CUSERNAME = ? AND
-					CPASSWORD = ? AND
-					CPASSWORD2 = ? AND
-					IISACTIVE = 1
-			";
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, globalOut('user_key3'));
-			$runQuery->bindParam(2, globalOut('users'));
-			$runQuery->bindParam(3, globalOut('user_key1'));
-			$runQuery->bindParam(4, globalOut('user_key2'));
-			$runQuery->execute();
-			$runQueryArray = $runQuery->fetch(PDO::FETCH_BOTH);
-			if($runQueryArray == array() || $runQueryArray == '' || !$runQueryArray)	//THE DATABASE DOESN'T HAVE ANYTHING WITH ALL PARAMATERS MET
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-		elseif(strtolower($type) === strtolower('client'))
-		{
-			$query = "
-				SELECT
-					CUSERNAME,
-					CPASSWORD,
-					IISACTIVE
-				FROM
-					client_account
-				WHERE
-					ICLIENTID = ? AND
-					CUSERNAME = ? AND
-					CPASSWORD = ? AND
-					IISACTIVE = 1
-			";
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, globalOut('user_key2'));
-			$runQuery->bindParam(2, globalOut('users'));
-			$runQuery->bindParam(3, globalOut('user_key1'));
-			$runQuery->execute();
-			$runQueryArray = $runQuery->fetch(PDO::FETCH_BOTH);
-			if($runQueryArray == array() || $runQueryArray == '' || !$runQueryArray)	//THE DATABASE DOESN'T HAVE ANYTHING WITH ALL PARAMATERS MET
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
 		}
 		else
 		{
@@ -204,7 +147,7 @@
 	{
 		require_once $_SERVER['DOCUMENT_ROOT'].'/_/banCheck.php';
 		banCheck();
-		$authUser = md5('Izodn');
+		$authUser = md5($_SESSION['ENV']['SUPERUSER']);
 		if(globalOut('user_key4'))
 		{
 			if(globalOut('user_key4') != $authUser)

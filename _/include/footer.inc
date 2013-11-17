@@ -19,8 +19,6 @@ a.footer-right
 }
 </style>
 	<div class="footer">
-		<!--<a href="/termsOfService.php" class="footer-left">Terms of Service</a>-->
-		<a href="/privacyPolicy.php" class="footer-right">Privacy Policy</a>
 	</div>
 </body>
 </html>
