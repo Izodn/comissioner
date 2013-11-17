@@ -1,3 +1,4 @@
+#NOTE: Don't put sensitive information here, this file will be secured in a soon-to-come build.
 DATABASE_LOCATION => localhost
 DATABASE => TEST_DB
 USER => TEST_USER
