@@ -1,0 +1,10 @@
+DATABASE_LOCATION => localhost
+DATABASE => TEST_DB
+USER => TEST_USER
+PASS => TEST_PASS
+#
+DEVELOPMENT => 1
+ERROR_REPORTING => 1
+OutputBuffer => 1
+DebugMode => 1
+TrackPages => 1
