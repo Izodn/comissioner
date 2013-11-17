@@ -516,7 +516,7 @@
 		echo '<a href="/settings.php">Settings</a>'."\n";
 		echo ' | '."\n";
 		echo '<a href="/reports.php">Reports</a>'."\n";
-		if(globalOut('users') == md5('Izodn') || (globalOut('user_key4') && globalOut('user_key4') == md5('Izodn')))
+		if(globalOut('users') == md5($_SESSION['ENV']['SUPERUSER']) || (globalOut('user_key4') && globalOut('user_key4') == md5($_SESSION['ENV']['SUPERUSER'])))
 		{
 			echo ' | '."\n";
 			echo '<a href="/userManagement.php">Admin Tools</a>'."\n";
@@ -540,11 +540,8 @@
 	}
 	function echoAdminLinks() //RENDER SUPERUSER LINKS
 	{
-		if(globalOut('users') == md5('Izodn') || (globalOut('user_key4') && globalOut('user_key4') == md5('Izodn')))
+		if(globalOut('users') == md5($_SESSION['ENV']['SUPERUSER']) || (globalOut('user_key4') && globalOut('user_key4') == md5($_SESSION['ENV']['SUPERUSER'])))
 		{
-			global $phpMyAdminURL;
-			echo '<a href="'.$phpMyAdminURL.'" target="blank">phpMyAdmin</a>'."\n";
-			echo ' | '."\n";
 			echo '<a href="/Register.php">Register</a>'."\n";
 			echo ' | '."\n";
 			echo '<a href="/userManagement.php">User Manage</a>'."\n";

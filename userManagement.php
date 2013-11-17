@@ -3,7 +3,7 @@
 	global $dbh;
 	if(!globalOut('users') || globalOut('users') !== $authUser)
 	{
-		if(globalOut('user_key4') && globalOut('user_key4') == md5('Izodn'))
+		if(globalOut('user_key4') && globalOut('user_key4') == md5($_SESSION['ENV']['SUPERUSER']))
 		{
 		}
 		else
