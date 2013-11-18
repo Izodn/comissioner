@@ -36,11 +36,20 @@ SQL;
 			if( $result['foundUser'] === "1" ) {
 				$this->userId = $result['iUserId'];
 				$this->userType = $result['cUserType'];
+				$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	DLASTLOGIN = NOW()
+WHERE
+	IUSERID = ?
+SQL;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $this->userId);
+				$runQuery->execute();
 				return true;
 			}
 			else {
-				echo $result['foundUser'];
-				die();
 				$this->errMsg = "Invalid username or password.";
 				return false;
 			}
@@ -79,7 +88,9 @@ SQL;
 				$this->errMsg = "Something broke, cannot login";
 				return false;
 			}
-			return true;
+			else {
+				return true;
+			}
 		}
 	}
 ?>
