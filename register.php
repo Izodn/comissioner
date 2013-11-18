@@ -15,6 +15,7 @@
 				$errMsg = $userObj->errMsg;
 			}
 			else {
+				$_SESSION['userObj'] = $userObj;
 				header('Location: index.php'); //Successfully created & logged in, goto index
 			}
 		}
