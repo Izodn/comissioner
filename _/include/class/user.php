@@ -5,20 +5,52 @@
 		var $noHashUsername;
 		var $username;
 		var $password;
-		var $userId;
-		var $userType;
 		function __construct($username, $password) {
 			$this->noHashUsername = $username;
 			$this->username = md5($username);
 			$this->password = md5($password);
+		}
+		function getUserId() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	iUserId
+FROM
+	COM_USER
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(2, $this->password);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['iUserId'];
+		}
+		function getUserType() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cUserType
+FROM
+	COM_USER
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(2, $this->password);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cUserType'];
 		}
 		function doLogin() {
 			global $dbh;
 			$query = <<<SQL
 SELECT
 	count(iUserId) foundUser,
-	iUserId,
-	cUserType,
 	iIsActive
 FROM
 	COM_USER
@@ -34,18 +66,18 @@ SQL;
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" ) {
-				$this->userId = $result['iUserId'];
-				$this->userType = $result['cUserType'];
 				$query = <<<SQL
 UPDATE
 	COM_USER
 SET
 	DLASTLOGIN = NOW()
 WHERE
-	IUSERID = ?
+	cUsername = ? AND
+	cPassword = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $this->userId);
+				$runQuery->bindParam(1, $this->username);
+				$runQuery->bindParam(2, $this->password);
 				$runQuery->execute();
 				return true;
 			}
