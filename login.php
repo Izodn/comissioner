@@ -1,11 +1,12 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
+	session_start();
+	if( isset($_SESSION['userObj']) )
+		header('Location: logout.php');
 	if( isset($_POST['login']) ) {
 		if( empty($_POST['username']) || empty($_POST['password']) ) {
 			$errMsg = "Please fill out all fields";
 		}
-		if(!isset($_SESSION))
-			session_start();
 		$userObj = new user($_POST['username'], $_POST['password']);
 		if(!$userObj->doLogin()) { //Will return false if bad can't login
 			$errMsg = $userObj->errMsg;
