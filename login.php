@@ -4,10 +4,10 @@
 	if( isset($_SESSION['userObj']) )
 		header('Location: logout.php');
 	if( isset($_POST['login']) ) {
-		if( empty($_POST['username']) || empty($_POST['password']) ) {
+		if( empty($_POST['email']) || empty($_POST['password']) ) {
 			$errMsg = "Please fill out all fields";
 		}
-		$userObj = new user($_POST['username'], $_POST['password']);
+		$userObj = new user($_POST['email'], $_POST['password']);
 		if(!$userObj->doLogin()) { //Will return false if bad can't login
 			$errMsg = $userObj->errMsg;
 		}
@@ -31,8 +31,8 @@
 			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
 				<table>
 					<tr>
-						<td>Username: </td>
-						<td><input type="text" name="username"></td>
+						<td>Email: </td>
+						<td><input type="text" name="email"></td>
 					</tr>
 					<tr>
 						<td>Password: </td>

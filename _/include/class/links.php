@@ -5,10 +5,10 @@
 		var $linkArr2 = array();
 		function __construct($userObj) {
 			$this->userType = $userObj->getUserType();
-			if($this->userType === "admin" || $this->userType === "superuser") {
+			if($this->userType === "commissioner" || $this->userType === "superuser") {
 				$this->addLink("Commissions", "/index.php");
 				$this->addLink("Public Galleries", "#");
-				$this->addLink("Settings", "#");
+				$this->addLink("Settings", "settings.php");
 				$this->addLink("Reports", "#");
 				if($this->userType === "superuser")
 					$this->addLink("Admin Tools", "#");
@@ -21,6 +21,10 @@
 					$this->addLink2('Archive', '#');
 				}
 			}
+			if($this->userType === "client") {
+				$this->addLink("Home", "/index.php");
+				$this->addLink("Logout", "/logout.php");
+			}
 		}
 		function addLink($name, $location) {
 			$this->linkArr[count($this->linkArr)] = array($name, $location);
@@ -31,7 +35,7 @@
 		function removeLink($name, $location=null) { //location can be provided for a more specific removal
 			//Needs work
 		}
-		function getLinks($seperator) {
+		function getLinks($seperator = " | ") {
 			$links = "";
 			$linkArrLen = count($this->linkArr);
 			for($a=0;$a<$linkArrLen;$a++) {

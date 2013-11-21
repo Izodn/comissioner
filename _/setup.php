@@ -18,13 +18,13 @@ SQL;
 		header('Location: /login.php');
 		die();
 	}
-	if( isset($_POST['register']) && !empty($_POST['username']) && !empty($_POST['password']) && !empty($_POST['rPassword']) ) {
+	if( isset($_POST['register']) && !empty($_POST['firstName']) && !empty($_POST['lastName']) && !empty($_POST['email']) && !empty($_POST['password']) && !empty($_POST['rPassword']) ) {
 		if( $_POST['password'] !== $_POST['rPassword'] ) {
 			$errMsg = "Passwords must match";
 		}
 		else {
-			$userObj = new user($_POST['username'], $_POST['password']);
-			if(!$userObj->doCreate('superuser')) {
+			$userObj = new user($_POST['email'], $_POST['password']);
+			if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'], 'superuser')) {
 				$errMsg = $userObj->errMsg;
 			}
 			else {
@@ -48,8 +48,16 @@ SQL;
 			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
 				<table>
 					<tr>
-						<td>Username: </td>
-						<td><input type="text" name="username"></td>
+						<td>First Name: </td>
+						<td><input type="text" name="firstName"></td>
+					</tr>
+					<tr>
+						<td>Last Name: </td>
+						<td><input type="text" name="lastName"></td>
+					</tr>
+					<tr>
+						<td>Email: </td>
+						<td><input type="text" name="email"></td>
 					</tr>
 					<tr>
 						<td>Password: </td>

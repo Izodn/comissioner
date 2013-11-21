@@ -2,11 +2,11 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	class user {
 		var $errMsg;
-		var $noHashUsername;
+		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
 		var $username;
 		var $password;
 		function __construct($username, $password) {
-			$this->noHashUsername = $username;
+			$this->email = $username;
 			$this->username = md5($username);
 			$this->password = md5($password);
 		}
@@ -27,6 +27,60 @@ SQL;
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['iUserId'];
+		}
+		function getFirstName() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cFirstName
+FROM
+	COM_USER
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(2, $this->password);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cFirstName'];
+		}
+		function getLastName() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cLastName
+FROM
+	COM_USER
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(2, $this->password);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cLastName'];
+		}
+		function getEmail() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cEmail
+FROM
+	COM_USER
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(2, $this->password);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cEmail'];
 		}
 		function getUserType() {
 			global $dbh;
@@ -86,7 +140,7 @@ SQL;
 				return false;
 			}
 		}
-		function doCreate($type="client") {
+		function doCreate($firstName, $lastName, $type="client") {
 			global $dbh;
 			$query = <<<SQL
 SELECT
@@ -108,13 +162,16 @@ SQL;
 			}
 			$query = <<<SQL
 INSERT INTO
-	COM_USER (CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
-VALUES (?, ?, ?, NOW(), 1)
+	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), 1)
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
-			$runQuery->bindParam(3, $type);
+			$runQuery->bindParam(1, $firstName);
+			$runQuery->bindParam(2, $lastName);
+			$runQuery->bindParam(3, $this->email);
+			$runQuery->bindParam(4, $this->username);
+			$runQuery->bindParam(5, $this->password);
+			$runQuery->bindParam(6, $type);
 			$runQuery->execute();
 			if(!$this->doLogin()) {
 				$this->errMsg = "Something broke, cannot login";
@@ -123,6 +180,25 @@ SQL;
 			else {
 				return true;
 			}
+		}
+		function changePass($newPass) {
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	CPASSWORD = ?,
+	DMODIFIEDDATE = NOW()
+WHERE
+	CUSERNAME = ? AND
+	CPASSWORD = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, md5($newPass));
+			$runQuery->bindParam(2, $this->username);
+			$runQuery->bindParam(3, $this->password);
+			$runQuery->execute();
+			$this->password = md5($newPass);
 		}
 	}
 ?>
