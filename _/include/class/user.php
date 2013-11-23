@@ -178,6 +178,10 @@ SQL;
 				return false;
 			}
 			else {
+				if($type !== "client") {
+					$this->addPaymentOption('Credit / Debit');
+					$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
+				}
 				return true;
 			}
 		}
@@ -199,6 +203,98 @@ SQL;
 			$runQuery->bindParam(3, $this->password);
 			$runQuery->execute();
 			$this->password = md5($newPass);
+		}
+		function addPaymentOption($name) {
+			global $dbh;
+			$query = <<<SQL
+INSERT INTO
+	COM_ACCOUNT(CNAME, IUSERID, DCREATEDDATE)
+VALUES(?, ?, NOW())
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $name);
+			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->execute();
+			return true;
+		}
+		function getPaymentId($name) {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	IACCOUNTID
+FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ? AND
+	CNAME = ?
+LIMIT
+	0,1
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindParam(2, $name);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['IACCOUNTID'];
+		}
+		function changePaymentDefault($id) {
+			global $dbh;
+			//$query changes all to not default
+			$query = <<<SQL
+UPDATE
+	COM_ACCOUNT
+SET
+	IISDEFAULT = 0
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->execute();
+			//$query changes only the selected one to default
+			$query = <<<SQL
+UPDATE
+	COM_ACCOUNT
+SET
+	IISDEFAULT = 1
+WHERE
+	IACCOUNTID = ? AND
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $id);
+			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->execute();
+		}
+		function removePaymentOption($id) {
+			global $dbh;
+			$query = <<<SQL
+DELETE FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ? AND
+	IACCOUNTID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindParam(2, $id);
+			$runQuery->execute();
+		}
+		function getPaymentOptions() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	CNAME,
+	IISDEFAULT
+FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->execute();
+			return($runQuery->fetchAll());
 		}
 	}
 ?>

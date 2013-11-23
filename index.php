@@ -2,6 +2,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	session_start();
 	if( !isset($_SESSION['userObj']) ) { //If not logged in
 		global $dbh;
@@ -24,13 +25,30 @@ SQL;
 			header('Location: login.php');
 		}
 	}
-	elseif($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") {
+	elseif($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
 		global $dbh;
+		$query = <<<SQL
+SELECT
+	IACCOUNTID
+FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ?
+LIMIT
+	0,1
+SQL;
+		$runQuery = $dbh->prepare($query);
+		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->execute();
+		$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+		if( $result['IACCOUNTID'] == null ) { //If no payment options go to settings page
+			header("Location: settings.php?paymentOptions=Payment+Options");
+		}
 		if( isset($_POST['submit']) && !empty($_POST['firstName']) && !empty($_POST['lastName']) && !empty($_POST['email']) && !empty($_POST['title']) && !empty($_POST['paymentOption']) ) {
 			
 		}
 		elseif( isset($_POST['submit']) ) {
-			$errMsg = "Please fill out all required fields"
+			$errMsg = "Please fill out all required fields";
 		}
 ?>
 <!DOCTYPE html>
@@ -98,8 +116,12 @@ SQL;
 						<td>Account Type:<font color="red">*</font></td>
 						<td>
 							<select name="paymentOption">
-								<option>Paypal</option>
-								<option selected>Credit/Debit</option>
+							<?php
+								$paymentOptions = $_SESSION['userObj']->getPaymentOptions();
+								foreach($paymentOptions as $row) {
+									echo '<option'.($default = $row['IISDEFAULT'] === '1'?' selected="selected"':'').'>'.$row['CNAME'].'</option>';
+								}
+							?>
 							</select>
 						</td>
 					</tr>
@@ -112,12 +134,15 @@ SQL;
 				<br>
 				<font color="red">*</font> = Required.
 			</form>
+			<?php
+				echo $errMsg = isset($errMsg) ? '<font color="#FF0000">'.$errMsg.'</font>' : ''; //Show error message if exists
+			?>
 		</center>
 	</body>
 </html>
 <?php
 	}
-	elseif( $_SESSION['userObj']->getUserType() === "client" ) {
+	elseif( $_SESSION['userObj']->getUserType() === "client" ) { //Is client
 		?>
 <!DOCTYPE html>
 <html>
