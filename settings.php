@@ -32,57 +32,16 @@
 		global $dbh;
 		if( isset($_POST['addPaymentOption']) ) {
 			if( !empty($_POST['paymentOptionName'])  ) {
-				$query = <<<SQL
-INSERT INTO
-	COM_ACCOUNT(CNAME, IUSERID, DCREATEDDATE)
-VALUES(?, ?, NOW())
-SQL;
-				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_POST['paymentOptionName']);
-				$runQuery->bindParam(2, $_SESSION['userObj']->getUserId());
-				$runQuery->execute();
+				$_SESSION['userObj']->addPaymentOption($_POST['paymentOptionName']);
 			}
 			else { // Appear as if nothing happened
 			}
 		}
 		elseif( isset($_POST['makeDefault']) && isset($_POST['id']) ) {
-			$query = <<<SQL
-UPDATE
-	COM_ACCOUNT
-SET
-	IISDEFAULT = 0
-WHERE
-	IUSERID = ?
-SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
-			$runQuery->execute();
-			$query = <<<SQL
-UPDATE
-	COM_ACCOUNT
-SET
-	IISDEFAULT = 1
-WHERE
-	IACCOUNTID = ? AND
-	IUSERID = ?
-SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $_POST['id']);
-			$runQuery->bindParam(2, $_SESSION['userObj']->getUserId());
-			$runQuery->execute();
+			$_SESSION['userObj']->changePaymentDefault($_POST['id']);
 		}
 		elseif( isset($_POST['remove']) && isset($_POST['id']) ) {
-			$query = <<<SQL
-DELETE FROM
-	COM_ACCOUNT
-WHERE
-	IUSERID = ? AND
-	IACCOUNTID = ?
-SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
-			$runQuery->bindParam(2, $_POST['id']);
-			$runQuery->execute();
+			$_SESSION['userObj']->removePaymentOption($_POST['id']);
 		}
 		$query = <<<SQL
 SELECT
