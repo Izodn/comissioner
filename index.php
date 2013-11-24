@@ -45,7 +45,38 @@ SQL;
 			header("Location: settings.php?paymentOptions=Payment+Options");
 		}
 		if( isset($_POST['submit']) && !empty($_POST['firstName']) && !empty($_POST['lastName']) && !empty($_POST['email']) && !empty($_POST['title']) && !empty($_POST['paymentOption']) ) {
-			
+			$cost = 0;
+			$description = !empty($_POST['description']) ? $_POST['description'] : "";
+			if(!empty($_POST['cost'])) {
+				//Expects American English numbers like "$12.50"
+				if($_POST['cost'] === str_replace(".", "", $_POST['cost'])) { //No decimal
+					$_POST['cost'] .= ".00";
+				}
+				$cost = intval(str_replace("$", "", str_replace(".", "", $_POST['cost'])));
+			}
+			/*
+			* UNFINISHED:
+			*	Need to populate COM_USER table with
+			*	new user to created a commission
+			*	with an unknown email.
+			*	Will work for existing users though.
+			*/
+			$query = <<<SQL
+INSERT INTO
+	COM_COMMISSION(CTITLE, CDESCRIPTION, ICLIENTID, ICOMMISSIONERID, ICOST, IACCOUNTID, IPAYMENTSTATUSID, IPROGRESSSTATUSID, IISARCHIVED, DCREATEDDATE)
+VALUES(?, ?, (SELECT IUSERID FROM COM_USER WHERE CEMAIL = ?), ?, ?, ?, 1, 1, 0, NOW())
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $_POST['title']);
+			$runQuery->bindParam(2, $description);
+			$runQuery->bindParam(3, $_POST['email']);
+			$runQuery->bindParam(4, $_SESSION['userObj']->getUserId());
+			$runQuery->bindParam(5, $cost); //Use already formatted cost var
+			$runQuery->bindParam(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
+			if(!$runQuery->execute())
+				$errMsg = "Could not submit commission...";
+			else
+				$successMsg = "Successful!";
 		}
 		elseif( isset($_POST['submit']) ) {
 			$errMsg = "Please fill out all required fields";
@@ -110,7 +141,7 @@ SQL;
 						<td><input type="text" name="title" size='16' maxlength="32" ></td>
 					<tr>
 						<td>Price:<font color="red">*</font></td>
-						<td><input type="text" name="price" size='16' maxlength="8" ></td>
+						<td><input type="text" name="cost" size='16' maxlength="8" ></td>
 					</tr>
 					<tr>
 						<td>Account Type:<font color="red">*</font></td>
@@ -136,6 +167,7 @@ SQL;
 			</form>
 			<?php
 				echo $errMsg = isset($errMsg) ? '<font color="#FF0000">'.$errMsg.'</font>' : ''; //Show error message if exists
+				echo $successMsg = isset($successMsg) ? '<font color="#FF0000">'.$successMsg.'</font>' : ''; //Show error message if exists
 			?>
 		</center>
 	</body>
