@@ -13,9 +13,9 @@
 				if($this->userType === "superuser")
 					$this->addLink("Admin Tools", "#");
 				$this->addLink("Logout", "/logout.php");
-				if( htmlentities($_SERVER['PHP_SELF']) === '/index.php' ) {
+				if( in_array(htmlentities($_SERVER['PHP_SELF']), array('/index.php', '/progress.php'))) {
 					$this->addLink2('Input', '/index.php');
-					$this->addLink2('Progress', '#');
+					$this->addLink2('Progress', 'progress.php');
 					$this->addLink2('Pending Commission', '#');
 					$this->addLink2('Search', '#');
 					$this->addLink2('Archive', '#');
@@ -52,7 +52,7 @@
 				}
 				$links .= '<a href="'.$this->linkArr2[$a][1].'">'.$this->linkArr2[$a][0].'</a>';
 			}
-			return $links."\n";
+			return $links."\n<br><br>\n";
 		}
 	}
 ?>

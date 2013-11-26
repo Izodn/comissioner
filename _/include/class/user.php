@@ -1,5 +1,10 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
+	//START ERROR MESSAGES
+	define('USERNAME_TAKEN', 'That username is unavailable.');
+	define('INVALID_LOGIN', 'Username or password is incorrect.');
+	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
+	//END ERROR MESSAGES
 	class user {
 		var $errMsg;
 		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
@@ -8,7 +13,7 @@
 		function __construct($username, $password = null) {
 			$this->email = $username;
 			$this->username = md5($username);
-			$this->password = $password === null ? "null" : md5($password); //If a password is provided, hash it otherwise save as "null"
+			$this->password = $password === null ? null : md5($password); //If a password is provided, hash it otherwise save as null
 		}
 		function getUserId() {
 			global $dbh;
@@ -136,16 +141,43 @@ SQL;
 				return true;
 			}
 			else {
-				$this->errMsg = "Invalid username or password.";
+				$this->errMsg = INVALID_LOGIN;
 				return false;
 			}
 		}
+		function doClaim($firstName, $lastName) { //Used to "claim" users created via commission-input
+			//This will need redone when email authentication in implemented
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	CFIRSTNAME = ?,
+	CLASTNAME = ?,
+	CPASSWORD = ?,
+	IISACTIVE = 1
+WHERE
+	CEMAIL = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $firstName);
+			$runQuery->bindParam(2, $lastName);
+			$runQuery->bindParam(3, $this->password);
+			$runQuery->bindParam(4, $this->email);
+			if(!$runQuery->execute()) {
+				$this->errMsg = SOMETHING_BROKE;
+				return false;
+			}
+			return true;
+		}
 		function doCreate($firstName, $lastName, $type="client", $autoLogin = true) {
 			global $dbh;
-			$isActive = $this->password !== "null" ? "1" : "0"; //If password is set as "null" (User created by commission entry), set to not active.
+			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
 			$query = <<<SQL
 SELECT
-	count(iUserId) foundUser
+	count(iUserId) foundUser,
+	cPassword,
+	iIsActive
 FROM
 	COM_USER
 WHERE
@@ -157,9 +189,19 @@ SQL;
 			$runQuery->bindParam(1, $this->username);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			if( $result['foundUser'] !== "0" ) {
-				$this->errMsg = "That username is taken";
-				return false;
+			if( $result['foundUser'] !== "0" ) { //if a user was found
+				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
+					$this->doClaim($firstName, $lastName); //Claim user
+					if(!$this->doLogin()) {
+						$this->errMsg = SOMETHING_BROKE;
+						return false;
+					}
+					return true;
+				}
+				else {
+					$this->errMsg = USERNAME_TAKEN;
+					return false;
+				}
 			}
 			$query = <<<SQL
 INSERT INTO
@@ -177,7 +219,7 @@ SQL;
 			$runQuery->execute();
 			if($autoLogin === true) {
 				if(!$this->doLogin()) {
-					$this->errMsg = "Something broke, cannot login";
+					$this->errMsg = SOMETHING_BROKE;
 					return false;
 				}
 			}
