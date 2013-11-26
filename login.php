@@ -32,7 +32,7 @@
 				<table>
 					<tr>
 						<td>Email: </td>
-						<td><input type="text" name="email"></td>
+						<td><input type="text" name="email" <?php echo (!empty($_POST['email']) ? 'value="'.$_POST['email'].'"' : ''); ?>></td>
 					</tr>
 					<tr>
 						<td>Password: </td>

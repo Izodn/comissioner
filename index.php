@@ -2,31 +2,34 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
-	session_start();
-	if( !isset($_SESSION['userObj']) ) { //If not logged in
+	requireLogin();
+	if($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
 		global $dbh;
-		global $links;
-		$query = <<<SQL
+		if(!empty($_GET['autoFill'])) {
+			$query = <<<SQL
 SELECT
-	iUserId
+	CFIRSTNAME,
+	CLASTNAME,
+	CEMAIL
 FROM
 	COM_USER
+WHERE
+	CEMAIL = ?
 LIMIT
 	0,1
 SQL;
-		$runQuery = $dbh->prepare($query);
-		$runQuery->execute();
-		$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-		if( $result === false ) { //No users found, need superuser setup
-			header('Location: _/setup.php');
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $_GET['autoFill']);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			$autoFill = array(
+				'firstName' => $result['CFIRSTNAME'],
+				'lastName' => $result['CLASTNAME'],
+				'email' => $result['CEMAIL']
+			);
 		}
-		else {
-			header('Location: login.php');
-		}
-	}
-	elseif($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
-		global $dbh;
 		$query = <<<SQL
 SELECT
 	IACCOUNTID
@@ -57,7 +60,7 @@ SQL;
 			/*
 			* 2013/11/25 - Brandon
 			* We need to create a user for the client that can be "claimed"
-			* For this we don't use a pass, and set auto-login to false (4th param).
+			* For this we don't use a pass. Set auto-login to false (4th param).
 			* The doCreate function will return false, and set $obj->errMsg. We don't need to handle this.
 			* We don't handle the false on create because we only want to create one if one doesn't already exist.
 			*/
@@ -97,14 +100,13 @@ SQL;
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
 			?>
-			<br><br>
 			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="get">
 				Autofill for: 
 				<select name="autoFill">
 					<option>--Choose a client--</option>
 					<?php
 						$query = <<<SQL
-SELECT
+SELECT DISTINCT
 	cu.CEMAIL
 FROM
 	COM_USER cu
@@ -117,11 +119,14 @@ SQL;
 						$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
 						$runQuery->execute();
 						while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
-							echo '<option value="'.$row['CEMAIL'].'">'.$row['CEMAIL'].'</option>';
+							echo '<option value="'.$row['CEMAIL'].'"'.(!empty($_GET['autoFill']) && $_GET['autoFill'] === $row['CEMAIL'] ? 'selected="selected"' : '').'>'.$row['CEMAIL'].'</option>';
 						}
 					?>
 				</select>
 				<input type="submit" name="submit" value="Go">
+				<?php
+					echo (!empty($_GET['autoFill']) ? '<a href="'.htmlentities($_SERVER['PHP_SELF']).'">Clear</a>' : ''); //Add "clear" link if autoFill is set.
+				?>
 			</form>
 			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="post">
 				<br>
@@ -130,15 +135,15 @@ SQL;
 					</tr>
 					<tr>
 						<td>Client's First Name:<font color="red">*</font></td>
-						<td><input type="text" name="firstName" size='32' maxlength="225" ></td>
+						<td><input type="text" name="firstName" size='32' maxlength="225" <?php echo (!empty($autoFill['firstName']) ? 'value = "'.$autoFill['firstName'].'" readonly="readonly"' : ""); ?>></td>
 					</tr>
 					<tr>
 						<td>Client's Last Name:<font color="red">*</font></td>
-						<td><input type="text" name="lastName" size='32' maxlength="225" ></td>
+						<td><input type="text" name="lastName" size='32' maxlength="225" <?php echo (!empty($autoFill['lastName']) ? 'value = "'.$autoFill['lastName'].'" readonly="readonly"' : ""); ?>></td>
 					</tr>
 					<tr>
 						<td>Client's Email:<font color="red">*</font></td>
-						<td><input type="text" name="email" size='32' maxlength="225" ></td>
+						<td><input type="text" name="email" size='32' maxlength="225" <?php echo (!empty($autoFill['email']) ? 'value = "'.$autoFill['email'].'" readonly="readonly"' : ""); ?>></td>
 					</tr>
 					<tr>
 						<td>Commission Title:<font color="red">*</font></td>
