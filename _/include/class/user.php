@@ -5,10 +5,10 @@
 		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
 		var $username;
 		var $password;
-		function __construct($username, $password) {
+		function __construct($username, $password = null) {
 			$this->email = $username;
 			$this->username = md5($username);
-			$this->password = md5($password);
+			$this->password = $password === null ? "null" : md5($password); //If a password is provided, hash it otherwise save as "null"
 		}
 		function getUserId() {
 			global $dbh;
@@ -140,8 +140,9 @@ SQL;
 				return false;
 			}
 		}
-		function doCreate($firstName, $lastName, $type="client") {
+		function doCreate($firstName, $lastName, $type="client", $autoLogin = true) {
 			global $dbh;
+			$isActive = $this->password !== "null" ? "1" : "0"; //If password is set as "null" (User created by commission entry), set to not active.
 			$query = <<<SQL
 SELECT
 	count(iUserId) foundUser
@@ -163,7 +164,7 @@ SQL;
 			$query = <<<SQL
 INSERT INTO
 	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
-VALUES (?, ?, ?, ?, ?, ?, NOW(), 1)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindParam(1, $firstName);
@@ -172,18 +173,19 @@ SQL;
 			$runQuery->bindParam(4, $this->username);
 			$runQuery->bindParam(5, $this->password);
 			$runQuery->bindParam(6, $type);
+			$runQuery->bindParam(7, $isActive);
 			$runQuery->execute();
-			if(!$this->doLogin()) {
-				$this->errMsg = "Something broke, cannot login";
-				return false;
-			}
-			else {
-				if($type !== "client") {
-					$this->addPaymentOption('Credit / Debit');
-					$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
+			if($autoLogin === true) {
+				if(!$this->doLogin()) {
+					$this->errMsg = "Something broke, cannot login";
+					return false;
 				}
-				return true;
 			}
+			if($type !== "client") {
+				$this->addPaymentOption('Credit / Debit');
+				$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
+			}
+			return true;
 		}
 		function changePass($newPass) {
 			global $dbh;

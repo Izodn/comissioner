@@ -55,12 +55,16 @@ SQL;
 				$cost = intval(str_replace("$", "", str_replace(".", "", $_POST['cost'])));
 			}
 			/*
-			* UNFINISHED:
-			*	Need to populate COM_USER table with
-			*	new user to created a commission
-			*	with an unknown email.
-			*	Will work for existing users though.
+			* 2013/11/25 - Brandon
+			* We need to create a user for the client that can be "claimed"
+			* For this we don't use a pass, and set auto-login to false (4th param).
+			* The doCreate function will return false, and set $obj->errMsg. We don't need to handle this.
+			* We don't handle the false on create because we only want to create one if one doesn't already exist.
 			*/
+			//START CLIENT USER CREATE
+			$client = new user($_POST['email']); // Create client object
+			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', false);
+			//END CLIENT USER CREATE
 			$query = <<<SQL
 INSERT INTO
 	COM_COMMISSION(CTITLE, CDESCRIPTION, ICLIENTID, ICOMMISSIONERID, ICOST, IACCOUNTID, IPAYMENTSTATUSID, IPROGRESSSTATUSID, IISARCHIVED, DCREATEDDATE)
@@ -105,9 +109,9 @@ SELECT
 FROM
 	COM_USER cu
 INNER JOIN
-	COM_COMMISSION cc ON (cc.ICOMMISSIONERID = cu.IUSERID)
+	COM_COMMISSION cc ON cc.ICLIENTID = cu.IUSERID
 WHERE
-	IUSERID = ?
+	cc.ICOMMISSIONERID = ?
 SQL;
 						$runQuery = $dbh->prepare($query);
 						$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
