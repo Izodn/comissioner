@@ -2,7 +2,7 @@
 	function getEnvString() {
 		$envString = <<<ENV
 DATABASE_LOCATION = localhost
-DATABASE = TEST_DB2
+DATABASE = TEST_DB
 USER = TEST_USER
 PASS = TEST_PASS
 #
