@@ -18,7 +18,6 @@
 					$this->addLink2('Progress', 'progress.php');
 					$this->addLink2('Pending Commission', '#');
 					$this->addLink2('Search', '#');
-					$this->addLink2('Archive', '#');
 				}
 			}
 			if($this->userType === "client") {

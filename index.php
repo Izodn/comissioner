@@ -61,12 +61,13 @@ SQL;
 			* 2013/11/25 - Brandon
 			* We need to create a user for the client that can be "claimed"
 			* For this we don't use a pass. Set auto-login to false (4th param).
+			* 5th param is 'do we set iisactive = 1'
 			* The doCreate function will return false, and set $obj->errMsg. We don't need to handle this.
 			* We don't handle the false on create because we only want to create one if one doesn't already exist.
 			*/
 			//START CLIENT USER CREATE
 			$client = new user($_POST['email']); // Create client object
-			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', false);
+			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', false, false);
 			//END CLIENT USER CREATE
 			$query = <<<SQL
 INSERT INTO
@@ -128,7 +129,7 @@ SQL;
 					echo (!empty($_GET['autoFill']) ? '<a href="'.htmlentities($_SERVER['PHP_SELF']).'">Clear</a>' : ''); //Add "clear" link if autoFill is set.
 				?>
 			</form>
-			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="post">
+			<form action="<?php echo htmlentities($_SERVER['PHP_SELF']); ?>" method="post">
 				<br>
 				<table>
 					<tr>

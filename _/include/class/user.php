@@ -170,9 +170,9 @@ SQL;
 			}
 			return true;
 		}
-		function doCreate($firstName, $lastName, $type="client", $autoLogin = true) {
+		function doCreate($firstName, $lastName, $type="client", $autoLogin = true, $isActive = true) {
 			global $dbh;
-			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
+			$isActive = $isActive === true ? '1' : '0'; //If password is set as null (User created by commission entry), set to not active.
 			$query = <<<SQL
 SELECT
 	count(iUserId) foundUser,
