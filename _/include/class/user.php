@@ -1,5 +1,7 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php'; //Include the hash functions
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	//START ERROR MESSAGES
 	define('USERNAME_TAKEN', 'That username is unavailable.');
 	define('INVALID_LOGIN', 'Username or password is incorrect.');
@@ -7,31 +9,25 @@
 	//END ERROR MESSAGES
 	class user {
 		var $errMsg;
+		var $salt;
+		var $hash_cost;
 		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
 		var $username;
 		var $password;
+		var $userId;
 		function __construct($username, $password = null) {
+			global $env; //We need the salt from env variables
+			$this->salt = isset($env['SALT']) ? $env['SALT'] : ''; //Default salt = ""
+			$this->hash_cost = isset($env['HASH_COST']) ? intVal($env['HASH_COST']) : 10; //Default cost = 10
 			$this->email = $username;
-			$this->username = md5($username);
-			$this->password = $password === null ? null : md5($password); //If a password is provided, hash it otherwise save as null
+			$this->username = $username;
+			$this->password = $password === null ? null : $password; //If a password is provided, hash it otherwise save as null
+		}
+		function hash_pass($val) {
+			return password_hash($val, PASSWORD_BCRYPT, array( 'SALT'=>$this->salt,'cost'=>$this->hash_cost ));
 		}
 		function getUserId() {
-			global $dbh;
-			$query = <<<SQL
-SELECT
-	iUserId
-FROM
-	COM_USER
-WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
-SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
-			$runQuery->execute();
-			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			return $result['iUserId'];
+			return $this->userId;
 		}
 		function getFirstName() {
 			global $dbh;
@@ -41,12 +37,10 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
+	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
+			$runQuery->bindParam(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cFirstName'];
@@ -59,12 +53,10 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
+	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
+			$runQuery->bindParam(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cLastName'];
@@ -77,12 +69,10 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
+	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
+			$runQuery->bindParam(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cEmail'];
@@ -95,12 +85,10 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
+	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
+			$runQuery->bindParam(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cUserType'];
@@ -110,33 +98,32 @@ SQL;
 			$query = <<<SQL
 SELECT
 	count(iUserId) foundUser,
-	iIsActive
+	iIsActive,
+	cPassword,
+	iUserId
 FROM
 	COM_USER
 WHERE
-	cUsername = ? AND
-	cPassword = ?
+	cUsername = ?
 LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindParam(1, $this->username);
-			$runQuery->bindParam(2, $this->password);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			if( $result['foundUser'] === "1" ) {
+			if( $result['foundUser'] === "1" && password_verify($this->password, $result['cPassword'])) {
+				$this->userId = $result['iUserId'];
 				$query = <<<SQL
 UPDATE
 	COM_USER
 SET
 	DLASTLOGIN = NOW()
 WHERE
-	cUsername = ? AND
-	cPassword = ?
+	IUSERID = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $this->username);
-				$runQuery->bindParam(2, $this->password);
+				$runQuery->bindParam(1, $this->userId);
 				$runQuery->execute();
 				return true;
 			}
@@ -162,7 +149,7 @@ SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindParam(1, $firstName);
 			$runQuery->bindParam(2, $lastName);
-			$runQuery->bindParam(3, $this->password);
+			$runQuery->bindParam(3, $this->hash_pass($this->password));
 			$runQuery->bindParam(4, $this->email);
 			if(!$runQuery->execute()) {
 				$this->errMsg = SOMETHING_BROKE;
@@ -189,7 +176,7 @@ SQL;
 			$runQuery->bindParam(1, $this->username);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			if( $result['foundUser'] !== "0" ) { //if a user was found
+			if( $result['foundUser'] === "1" ) { //if a user was found
 				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
 					$this->doClaim($firstName, $lastName); //Claim user
 					if(!$this->doLogin()) {
@@ -199,10 +186,12 @@ SQL;
 					return true;
 				}
 				else {
+					echo dump($result);
 					$this->errMsg = USERNAME_TAKEN;
 					return false;
 				}
 			}
+			$pass = $this->password === null ? null : $this->hash_pass($this->password);
 			$query = <<<SQL
 INSERT INTO
 	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
@@ -213,7 +202,8 @@ SQL;
 			$runQuery->bindParam(2, $lastName);
 			$runQuery->bindParam(3, $this->email);
 			$runQuery->bindParam(4, $this->username);
-			$runQuery->bindParam(5, $this->password);
+			//If password is null (created via commission entry), pass '' instead of attempting to hash
+			$runQuery->bindParam(5, $pass);
 			$runQuery->bindParam(6, $type);
 			$runQuery->bindParam(7, $isActive);
 			$runQuery->execute();
@@ -238,15 +228,13 @@ SET
 	CPASSWORD = ?,
 	DMODIFIEDDATE = NOW()
 WHERE
-	CUSERNAME = ? AND
-	CPASSWORD = ?
+	userId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, md5($newPass));
-			$runQuery->bindParam(2, $this->username);
-			$runQuery->bindParam(3, $this->password);
+			$runQuery->bindParam(1, $this->hash_pass($newPass));
+			$runQuery->bindParam(2, $this->userId);
 			$runQuery->execute();
-			$this->password = md5($newPass);
+			$this->password = $newPass;
 		}
 		function addPaymentOption($name) {
 			global $dbh;
