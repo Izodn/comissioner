@@ -1,4 +1,5 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	session_start();
 	session_destroy();
 ?>

@@ -1,4 +1,5 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	class links {
 		var $userType;
 		var $linkArr = array();

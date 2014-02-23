@@ -1,4 +1,5 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/environment.php';
 	global $env;
 	if( empty($env['DEVELOPMENT']) || $env['DEVELOPMENT'] !== "1" ) {

@@ -1,7 +1,7 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php'; //Include the hash functions
-	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	//START ERROR MESSAGES
 	define('USERNAME_TAKEN', 'That username is unavailable.');
 	define('INVALID_LOGIN', 'Username or password is incorrect.');
@@ -186,7 +186,6 @@ SQL;
 					return true;
 				}
 				else {
-					echo dump($result);
 					$this->errMsg = USERNAME_TAKEN;
 					return false;
 				}

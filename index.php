@@ -1,9 +1,10 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
-	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
 	requireLogin();
 	if($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
 		global $dbh;
@@ -52,10 +53,7 @@ SQL;
 			$description = !empty($_POST['description']) ? $_POST['description'] : "";
 			if(!empty($_POST['cost'])) {
 				//Expects American English numbers like "$12.50"
-				if($_POST['cost'] === str_replace(".", "", $_POST['cost'])) { //No decimal
-					$_POST['cost'] .= ".00";
-				}
-				$cost = intval(str_replace("$", "", str_replace(".", "", $_POST['cost'])));
+				$cost = strToMoney($_POST['cost']);
 			}
 			/*
 			* 2013/11/25 - Brandon
