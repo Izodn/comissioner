@@ -10,6 +10,8 @@
 		function __construct($headerArr=array(), $dataArr=array()) { //Expects 0-Indexed arrays
 			$realHeaders = array();
 			$headerLen = count($headerArr);
+			$realHeaders = array();
+			$realData = array();
 			for($a=0;$a<$headerLen;$a++) {
 				$realHeaders[$headerArr[$a]] = $headerArr[$a];
 			}

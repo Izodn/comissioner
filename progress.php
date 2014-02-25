@@ -3,6 +3,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/table.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/commission.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php'; //Checks login and starts session
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
@@ -12,8 +13,28 @@
 	requireLogin();
 	if($_SESSION['userObj']->getUserType() === 'superuser' || $_SESSION['userObj']->getType() === 'commissioner') {
 		if( !empty($_POST) ) {
-			echo dump($_POST);
+			//HERE'S WHERE WE'LL HANDLE THE POST
+			if( isset($_POST['commissionId']) ) {
+				$commissions = array();
+				$commissionsLen = count($_POST['commissionId']);
+				for($a=0;$a<$commissionsLen;$a++) {
+					$commissions[$a] = new commission($_POST['commissionId'][$a]); //Create new obj constructed with id
+					if( isset($_POST['progress'][$a]) )
+						$commissions[$a]->updateProgressStatus($_POST['progress'][$a]);
+					if( isset($_POST['payment'][$a]) )
+						$commissions[$a]->updatePaymentStatus($_POST['payment'][$a]);
+					if( isset($_POST['archive']) ) {
+						if( in_array($_POST['commissionId'][$a], $_POST['archive']) )
+							$commissions[$a]->archive();
+					}
+				}
+			}
+			//echo dump($_POST);
 		}
+		if( isset($_GET['archives']) )
+			$archives = '1';
+		else
+			$archives = '0';
 ?>
 <!DOCTYPE html>
 <html>
@@ -80,10 +101,11 @@ INNER JOIN
 	COM_PAYMENTSTATUS cpa ON cpa.iStatusId = cc.iPaymentStatusId
 WHERE
 	cc.iCommissionerId = ? AND
-	cc.iIsArchived = '0'
+	cc.iIsArchived = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(2, $archives);
 				$runQuery->execute();
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
 				$table = new table($headers, $result);
@@ -96,7 +118,7 @@ SQL;
 				$table->hideColumn('Commission ID', /*HideHeader*/true, /*HideData*/false, /*ExcludeTh*/true, /*ExcludeTd*/true);
 				echo '<form action="'.htmlentities($_SERVER['PHP_SELF']).'" method="POST">';
 				echo $table->getTable();
-				echo '<br /><input type="submit" name="archive" value="Archive Selected">';
+				echo '<br /><input type="submit" name="archiveBtn" value="Archive Selected">';
 				echo '</form>';
 			?>
 		</center>
