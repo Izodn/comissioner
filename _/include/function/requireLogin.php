@@ -3,22 +3,6 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	function requireLogin($type='') {
-		global $dbh;
-		$query = <<<SQL
-SELECT
-	iUserId
-FROM
-	COM_USER
-LIMIT
-	0,1
-SQL;
-		$runQuery = $dbh->prepare($query);
-		$runQuery->execute();
-		$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-		if( $result === false ) { //No users found, need superuser setup
-			header('Location: _/setup.php');
-			die(); //Die to prevent further script execution
-		}
 		if(empty($_SESSION)) { //Start session if not already set (Shouldn't be already set)
 			session_start();
 		}

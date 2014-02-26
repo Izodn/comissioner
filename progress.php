@@ -11,7 +11,11 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/strToSelect.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	requireLogin();
-	if($_SESSION['userObj']->getUserType() === 'superuser' || $_SESSION['userObj']->getType() === 'commissioner') {
+	if($_SESSION['userObj']->getUserType() === 'superuser' || $_SESSION['userObj']->getUserType() === 'commissioner') {
+		if( isset($_GET['archives']) )
+			$archives = 1;
+		else
+			$archives = 0;
 		if( !empty($_POST) ) {
 			//HERE'S WHERE WE'LL HANDLE THE POST
 			if( isset($_POST['commissionId']) ) {
@@ -24,17 +28,17 @@
 					if( isset($_POST['payment'][$a]) )
 						$commissions[$a]->updatePaymentStatus($_POST['payment'][$a]);
 					if( isset($_POST['archive']) ) {
-						if( in_array($_POST['commissionId'][$a], $_POST['archive']) )
-							$commissions[$a]->archive();
+						if( in_array($_POST['commissionId'][$a], $_POST['archive']) ) {
+							if($archives === 0)
+								$commissions[$a]->archive();
+							else
+								$commissions[$a]->unArchive();
+						}
 					}
 				}
 			}
 			//echo dump($_POST);
 		}
-		if( isset($_GET['archives']) )
-			$archives = '1';
-		else
-			$archives = '0';
 ?>
 <!DOCTYPE html>
 <html>
@@ -47,7 +51,7 @@
 				global $dbh;
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
-				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Price', 'Input Time', 'Progress', 'Payment', 'Archive');
+				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment', 'Archive');
 				$progressSelOptions = array();
 				$query = <<<SQL
 SELECT
@@ -86,7 +90,7 @@ SELECT
 	cc.cTitle as title,
 	concat(cu.cFirstName,' ',cu.cLastName) as clientName,
 	cc.cDescription as description,
-	cc.iCost as price,
+	cc.iCost as cost,
 	cc.dCreatedDate as inputTime,
 	cpr.cName as progressStatus,
 	cpa.cName as paymentStatus,
@@ -110,13 +114,20 @@ SQL;
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
 				$table = new table($headers, $result);
 				$table->setAttr('border',1);
+				//START modify each title to link to the unique commission page
+				$tableData = $table->dataArr;
+				foreach($tableData as $keyA=>$valA) {
+					$tableData[$keyA]['Title'] = '<a href="commission.php?id='.$tableData[$keyA]['Commission ID'].'">'.$tableData[$keyA]['Title'].'</a>';
+				}
+				$table->dataArr = $tableData;
+				//STOP modify each title to link to the unique commission page
 				$table->changeData('all', 'Commission ID', 'strToInput', array('hidden', 'commissionId[]'));
-				$table->changeData('all', 'Price', 'moneyToStr');
+				$table->changeData('all', 'Cost', 'moneyToStr');
 				$table->changeData('all', 'Archive', 'strToInput', array('checkbox', 'archive[]'));
 				$table->changeData('all', 'Progress', 'strToSelect', array('progress[]', $progressSelOptions, 'onChange="form.submit()"'));
 				$table->changeData('all', 'Payment', 'strToSelect', array('payment[]', $paymentSelOptions, 'onChange="form.submit()"'));
 				$table->hideColumn('Commission ID', /*HideHeader*/true, /*HideData*/false, /*ExcludeTh*/true, /*ExcludeTd*/true);
-				echo '<form action="'.htmlentities($_SERVER['PHP_SELF']).'" method="POST">';
+				echo '<form action="'.htmlentities($_SERVER['REQUEST_URI']).'" method="POST">';
 				echo $table->getTable();
 				echo '<br /><input type="submit" name="archiveBtn" value="Archive Selected">';
 				echo '</form>';
@@ -127,6 +138,7 @@ SQL;
 <?php
 	}
 	elseif($_SESSION['userObj']->getUserType() === 'client') {
-		echo 'hello there';
+		//Handle here
+		header('Location: /'); //The client progress page is index.php
 	}
 ?>

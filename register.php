@@ -1,6 +1,10 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
+	if(empty($_SESSION))
+		session_start();
+	if(isset($_SESSION['userObj'])) //Avoid hitting this page when logged in
+		header('Location: index.php');
 	if( isset($_POST['register']) ) {
 		if( empty($_POST['lastName']) || empty($_POST['lastName']) || empty($_POST['email']) || empty($_POST['password']) || empty($_POST['rPassword']) ) {
 			$errMsg = "Please fill out all fields";
@@ -9,8 +13,6 @@
 			$errMsg = "Passwords must match";
 		}
 		else {
-			if(!isset($_SESSION))
-				session_start();
 			$userObj = new user($_POST['email'], $_POST['password']);
 			if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'])) { //Will return false if cannot create / login after create
 				$errMsg = $userObj->errMsg;

@@ -2,6 +2,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/table.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
@@ -64,7 +65,7 @@ SQL;
 			*/
 			//START CLIENT USER CREATE
 			$client = new user($_POST['email']); // Create client object
-			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', false);
+			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', /*AutoLogin*/false, /*FromCommissionInput*/true);
 			//END CLIENT USER CREATE
 			$query = <<<SQL
 INSERT INTO
@@ -151,7 +152,7 @@ SQL;
 						<td><input type="text" name="cost" size='16' maxlength="8" ></td>
 					</tr>
 					<tr>
-						<td>Account Type:<font color="red">*</font></td>
+						<td>Payment Option:<font color="red">*</font></td>
 						<td>
 							<select name="paymentOption">
 							<?php
@@ -182,22 +183,63 @@ SQL;
 <?php
 	}
 	elseif( $_SESSION['userObj']->getUserType() === "client" ) { //Is client
-		?>
+?>
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Commissioner - Home</title>
+		<title>Commissioner - Progress</title>
 	</head>
 	<body>
 		<center>
 			<?php
+				global $dbh;
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
+				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
+				$query = <<<SQL
+SELECT
+	cc.iCommissionId,
+	cc.cTitle as title,
+	concat(cu.cFirstName,' ',cu.cLastName) as clientName,
+	cc.cDescription as description,
+	cc.iCost as cost,
+	cc.dCreatedDate as inputTime,
+	cpr.cName as progressStatus,
+	cpa.cName as paymentStatus,
+	cc.iCommissionId as commissionId
+FROM
+	COM_COMMISSION cc
+INNER JOIN
+	COM_USER cu ON cu.iUserId = cc.iClientId
+INNER JOIN
+	COM_PROGRESSSTATUS cpr ON cpr.iStatusId = cc.iProgressStatusId
+INNER JOIN
+	COM_PAYMENTSTATUS cpa ON cpa.iStatusId = cc.iPaymentStatusId
+WHERE
+	cc.iClientId = ?
+SQL;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->execute();
+				$result = $runQuery->fetchall(PDO::FETCH_NUM);
+				$table = new table($headers, $result);
+				$table->setAttr('border',1);
+				//START modify each title to link to the unique commission page
+				$tableData = $table->dataArr;
+				foreach($tableData as $keyA=>$valA) {
+					$tableData[$keyA]['Title'] = '<a href="commission.php?id='.$tableData[$keyA]['Commission ID'].'">'.$tableData[$keyA]['Title'].'</a>';
+				}
+				$table->dataArr = $tableData;
+				//STOP modify each title to link to the unique commission page
+				$table->changeData('all', 'Cost', 'moneyToStr');
+				$table->hideColumn('Commission ID', /*HideHeader*/true, /*HideData*/true, /*ExcludeTh*/true, /*ExcludeTd*/true);
+				echo $table->getTable();
 			?>
 		</center>
 	</body>
 </html>
-		<?php
+
+<?php
 	}
 	else {
 		//Type not handled, this is bad.

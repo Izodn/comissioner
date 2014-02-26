@@ -14,7 +14,7 @@
 				if($this->userType === "superuser")
 					$this->addLink("Admin Tools", "#");
 				$this->addLink("Logout", "/logout.php");
-				if( in_array(htmlentities($_SERVER['PHP_SELF']), array('/index.php', '/progress.php'))) {
+				if( in_array(htmlentities($_SERVER['PHP_SELF']), array('/index.php', '/progress.php', '/commission.php'))) {
 					$this->addLink2('Input', '/index.php');
 					$this->addLink2('Progress', 'progress.php');
 					$this->addLink2('Pending Commission', '#');
@@ -23,7 +23,7 @@
 				}
 			}
 			if($this->userType === "client") {
-				$this->addLink("Home", "/index.php");
+				$this->addLink("Home", "/");
 				$this->addLink("Logout", "/logout.php");
 			}
 		}

@@ -3,6 +3,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php';
 	session_start();
 	if( !isset($_SESSION['userObj']) && ($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") )
 		header('Location: /'); //Not allowed, go away
@@ -42,7 +43,9 @@
 			$_SESSION['userObj']->changePaymentDefault($_POST['id']);
 		}
 		elseif( isset($_POST['remove']) && isset($_POST['id']) ) {
-			$_SESSION['userObj']->removePaymentOption($_POST['id']);
+			if($_SESSION['userObj']->removePaymentOption($_POST['id']) === false) {
+				$errMsg = $_SESSION['userObj']->errMsg;
+			}
 		}
 		$query = <<<SQL
 SELECT
@@ -73,8 +76,24 @@ SQL;
 								echo '<td><font color="#FF0000">Default</font></td>';
 							else
 								echo '<td><input type="submit" name="makeDefault" value="Make Default"></td>';
+							$caQuery = <<<SQL
+SELECT
+	count(iCommissionId) comCount
+FROM
+	COM_COMMISSION
+WHERE
+	iAccountId = ?
+SQL;
+							$runCaQuery = $dbh->prepare($caQuery);
+							$runCaQuery->bindParam(1, $row['IACCOUNTID']);
+							$runCaQuery->execute();
+							$caResult = $runCaQuery->fetch(PDO::FETCH_ASSOC);
+							if( $caResult['comCount'] === '0')
+								echo '<td><input alt="test" type="submit" name="remove" value="Remove"></td>';
+							else
+								echo '<td><button disabled="disabled" alt="Cannot remove payment options that are in use">Remove</button></td>';
+
 						?>
-						<td><input type="submit" name="remove" value="Remove"></td>
 					</form>
 				</tr>
 					<?php
@@ -93,7 +112,10 @@ SQL;
 				</tr>
 			</form>
 		</table>
+		<br>
 		<?php
+			if(isset($errMsg))
+				echo '<font color="#FF0000">'.$errMsg.'</font>';
 	}
 	function accountView() {
 		global $dbh;
@@ -117,7 +139,7 @@ SQL;
 				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-				if( $result['CPASSWORD'] === md5($_POST['oldPass']) ) {
+				if( password_verify($_POST['oldPass'], $result['CPASSWORD']) ) {
 					$_SESSION['userObj']->changePass($_POST['newPass']); //The user class expects an unhashed password
 					$successMsg = "Password Changed";
 				}

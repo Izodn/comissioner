@@ -6,6 +6,7 @@
 	define('USERNAME_TAKEN', 'That username is unavailable.');
 	define('INVALID_LOGIN', 'Username or password is incorrect.');
 	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
+	define('ACCOUNT_IN_USE', 'That payment option is in use, and can\'t be deleted.');
 	//END ERROR MESSAGES
 	class user {
 		var $errMsg;
@@ -157,7 +158,7 @@ SQL;
 			}
 			return true;
 		}
-		function doCreate($firstName, $lastName, $type="client", $autoLogin = true) {
+		function doCreate($firstName, $lastName, $type="client", $autoLogin = true, $fromComInput = false) {
 			global $dbh;
 			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
 			$query = <<<SQL
@@ -176,7 +177,7 @@ SQL;
 			$runQuery->bindParam(1, $this->username);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			if( $result['foundUser'] === "1" ) { //if a user was found
+			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
 				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
 					$this->doClaim($firstName, $lastName); //Claim user
 					if(!$this->doLogin()) {
@@ -190,33 +191,36 @@ SQL;
 					return false;
 				}
 			}
-			$pass = $this->password === null ? null : $this->hash_pass($this->password);
-			$query = <<<SQL
+			elseif($result['foundUser'] === '0') { //Only if no users found
+				$pass = $this->password === null ? null : $this->hash_pass($this->password);
+				$query = <<<SQL
 INSERT INTO
 	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $firstName);
-			$runQuery->bindParam(2, $lastName);
-			$runQuery->bindParam(3, $this->email);
-			$runQuery->bindParam(4, $this->username);
-			//If password is null (created via commission entry), pass '' instead of attempting to hash
-			$runQuery->bindParam(5, $pass);
-			$runQuery->bindParam(6, $type);
-			$runQuery->bindParam(7, $isActive);
-			$runQuery->execute();
-			if($autoLogin === true) {
-				if(!$this->doLogin()) {
-					$this->errMsg = SOMETHING_BROKE;
-					return false;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $firstName);
+				$runQuery->bindParam(2, $lastName);
+				$runQuery->bindParam(3, $this->email);
+				$runQuery->bindParam(4, $this->username);
+				//If password is null (created via commission entry), pass '' instead of attempting to hash
+				$runQuery->bindParam(5, $pass);
+				$runQuery->bindParam(6, $type);
+				$runQuery->bindParam(7, $isActive);
+				$runQuery->execute();
+				if($autoLogin === true) {
+					if(!$this->doLogin()) {
+						$this->errMsg = SOMETHING_BROKE;
+						return false;
+					}
 				}
+				if($type !== "client") {
+					$this->addPaymentOption('Credit / Debit');
+					$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
+				}
+				return true;
 			}
-			if($type !== "client") {
-				$this->addPaymentOption('Credit / Debit');
-				$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
-			}
-			return true;
+			return true; //Should only get hit when inputting a commission for a user that hasn't been claimed yet
 		}
 		function changePass($newPass) {
 			global $dbh;
@@ -227,7 +231,7 @@ SET
 	CPASSWORD = ?,
 	DMODIFIEDDATE = NOW()
 WHERE
-	userId = ?
+	iUserId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindParam(1, $this->hash_pass($newPass));
@@ -299,6 +303,22 @@ SQL;
 		}
 		function removePaymentOption($id) {
 			global $dbh;
+			$query = <<<SQL
+SELECT
+	count(iCommissionId) comCount
+FROM
+	COM_COMMISSION
+WHERE
+	iAccountId = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $id);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			if($result['comCount'] !== '0') { //Can't delete payment options in use
+				$this->errMsg = ACCOUNT_IN_USE;
+				return false;
+			}
 			$query = <<<SQL
 DELETE FROM
 	COM_ACCOUNT
