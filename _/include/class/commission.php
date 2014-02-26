@@ -97,7 +97,7 @@ SQL;
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					foreach($results as $key=>$val) {
-						$this->images[count($this->images)] = $results['cLocation'];
+						$this->images[count($this->images)] = $val['location'];
 					}
 				}
 			}
@@ -228,6 +228,72 @@ SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $this->commissionId);
 				$runQuery->execute();
+			}
+		}
+		function uploadPhoto($file = null) {
+			global $dbh;
+			/*
+			*   FILE UPLOAD CODE COURTESY OF "CertaiN"
+			*   http://us2.php.net/file_upload#114004
+			*/
+			$uploadDir = './clientside/';
+			$fileSize = 20000000; //Size in byte
+			$allowedTypes = array(
+				'jpg' => 'image/jpeg',
+				'png' => 'image/png',
+				'gif' => 'image/gif'
+			);
+			if( $file===null ) {
+				return false;
+			}
+			try {
+				// Undefined | Multiple Files | $file Corruption Attack
+				// If this request falls under any of them, treat it invalid.
+				if( !isset($file['upfile']['error']) || is_array($file['upfile']['error']) ) {
+					throw new RuntimeException('Invalid parameters.');
+				}
+				// Check $file['upfile']['error'] value.
+				switch($file['upfile']['error']) {
+					case UPLOAD_ERR_OK:
+						break;
+					case UPLOAD_ERR_NO_FILE:
+						throw new RuntimeException('No file sent.');
+					case UPLOAD_ERR_INI_SIZE:
+					case UPLOAD_ERR_FORM_SIZE:
+						throw new RuntimeException('Exceeded filesize limit.');
+					default:
+						throw new RuntimeException('Unknown errors.');
+				}
+				// You should also check filesize here. 
+				if($file['upfile']['size'] > $fileSize) {
+					throw new RuntimeException('Exceeded filesize limit.');
+				}
+				// DO NOT TRUST $file['upfile']['mime'] VALUE !!
+				// Check MIME Type by yourself.
+				$finfo = new finfo(FILEINFO_MIME_TYPE);
+				if( false === $ext = array_search($finfo->file($file['upfile']['tmp_name']), $allowedTypes, true) ) {
+					throw new RuntimeException('Invalid file format.');
+				}
+				// You should name it uniquely.
+				// DO NOT USE $file['upfile']['name'] WITHOUT ANY VALIDATION !!
+				// On this example, obtain safe unique name from its binary data.
+				$shaFileName = sha1_file($file['upfile']['tmp_name']);
+				$fullPath = $uploadDir.$shaFileName.$ext;
+				if ( !move_uploaded_file($file['upfile']['tmp_name'], sprintf($uploadDir.'%s.%s', $shaFileName, $ext)) ) {
+					throw new RuntimeException('Failed to move uploaded file.');
+				}
+				$query = <<<SQL
+INSERT INTO COM_IMAGES(cLocation,iCommissionId,iUserId,dCreatedDate)
+VALUES(?, ?, ?, NOW())
+SQL;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $fullPath);
+				$runQuery->bindParam(2, $this->commissionId);
+				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
+				$runQuery->execute();
+				return true;
+			} catch (RuntimeException $e) {
+				$this->error = $e->getMessage();
 			}
 		}
 	}

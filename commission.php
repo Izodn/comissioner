@@ -50,6 +50,7 @@
 								else
 									echo '<td>No Images';
 								//Photo upload icon here
+								echo '<a href="photo.php?c='.$commission->commissionId.'"><img src="/images/upload.jpg" align="right"></a>';
 								echo '</td>';
 							}
 							else

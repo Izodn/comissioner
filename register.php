@@ -31,6 +31,22 @@
 <html>
 	<head>
 		<title>Commissioner - Login</title>
+		<script>
+			defaultDetails = '<b>*</b><a href="javascript:showDetails()">(details)</a>'
+			onload = function() {
+				document.getElementById("passwdDetails").innerHTML = defaultDetails;
+			}
+			showDetails = function() {
+				document.getElementById("passwdDetails").innerHTML = '<b>*</b>We do not store your passwords as plain text.<Br>\
+				All passwords are hashed (a.k.a encrypted) using very powerful hashing algorithms.<br>\
+				Example: "<b>password</b>" can be saved as "<b>$2y$10$H.npQ0Ad1xXWFQhkixNyRewx32GtuOmLsZ3P2m6xT4fxkjOmHMukW</b>"<br>\
+				Note: You\'ll still use your desired password to login. This only enhances the security of the site.<br>\
+				<a href="javascript:hideDetails()">(hide)</a>';
+			}
+			hideDetails = function() {
+				document.getElementById("passwdDetails").innerHTML = defaultDetails;
+			}
+		</script>
 	</head>
 	<body>
 		<center>
@@ -50,11 +66,11 @@
 						<td><input type="text" name="email"<?php echo $value=!empty($_POST['email'])?' value="'.htmlentities($_POST['email']).'"':"" ?>></td>
 					</tr>
 					<tr>
-						<td>Password: </td>
+						<td>*Password: </td>
 						<td><input type="password" name="password"></td>
 					</tr>
 					<tr>
-						<td>Repeat Password: </td>
+						<td>*Repeat Password: </td>
 						<td><input type="password" name="rPassword"></td>
 					</tr>
 					<tr>
@@ -62,6 +78,8 @@
 					</tr>
 				</table>
 				<input type="submit" name="back" value="Back">
+				<br><br>
+				<div id="passwdDetails"></div>
 			</form>
 			<?php echo ($errMsg = isset($errMsg) ? '<font color="#FF0000">'.$errMsg.'</font>' : "")."\n"; ?>
 		</center>
