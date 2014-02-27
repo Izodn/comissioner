@@ -36,6 +36,7 @@
 						}
 					}
 				}
+				header('Location: '.$_SERVER['REQUEST_URI']); //Redirect so refresh doesn't re-submit
 			}
 			//echo dump($_POST);
 		}

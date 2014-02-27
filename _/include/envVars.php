@@ -11,6 +11,8 @@ HASH_COST = 10
 #
 DEVELOPMENT = 1
 DEBUGGING = 0
+#
+IMAGE_LIB = clientside/
 ENV;
 	return $envString;
 	}

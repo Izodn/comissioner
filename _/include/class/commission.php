@@ -4,6 +4,7 @@
 	define('COMMISSION_NOT_EXIST', 'That commission doesn\'t exist.');
 	define('PAYMENT_STATUS_NOT_EXIST', 'Tried using payment status that doesn\'t exist.');
 	define('PROGRESS_STATUS_NOT_EXIST', 'Tried using progress status that doesn\'t exist.');
+	define('TITLE_CHANGE_FAIL', 'Could not change the title of commission.');
 	class commission {
 		var $commissionId;
 		var $exists = false; //Always true or false
@@ -21,7 +22,7 @@
 		var $paymentStatus;
 		var $commissionerId;
 		var $clientId;
-		var $gallaryExists = false;
+		var $galleryExists = false;
 		var $images = array(); // 0-Index=>imageLocation
 		var $error;
 		function __construct($id) {
@@ -81,8 +82,8 @@ SQL;
 				$this->isArchived = $result['isArchived'];
 				$this->commissionerId = $result['commissionerId'];
 				$this->clientId = $result['clientId'];
-				$this->gallaryExists = ($result['imageCount']!=='0'?true:false); //If there's at least 1 iamge, set to true
-				if( $this->gallaryExists === true ) {
+				$this->galleryExists = ($result['imageCount']!=='0'?true:false); //If there's at least 1 iamge, set to true
+				if( $this->galleryExists === true ) {
 					$query = <<<SQL
 SELECT
 	iImageId as imageId,
@@ -230,13 +231,35 @@ SQL;
 				$runQuery->execute();
 			}
 		}
+		function changeTitle($newTitle) {
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_COMMISSION
+SET
+	cTitle = ?,
+	dModifiedDate = NOW()
+WHERE
+	iCommissionId = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $newTitle);
+			$runQuery->bindParam(2, $this->commissionId);
+			if(!$runQuery->execute()) {
+				$this->error = TITLE_CHANGE_FAIL;
+				return false;
+			}
+			$this->title = $newTitle;
+			return true;
+		}
 		function uploadPhoto($file = null) {
+			global $env;
 			global $dbh;
 			/*
 			*   FILE UPLOAD CODE COURTESY OF "CertaiN"
 			*   http://us2.php.net/file_upload#114004
 			*/
-			$uploadDir = './clientside/';
+			$uploadDir = $env['IMAGE_LIB'];
 			$fileSize = 20000000; //Size in byte
 			$allowedTypes = array(
 				'jpg' => 'image/jpeg',
@@ -278,7 +301,7 @@ SQL;
 				// DO NOT USE $file['upfile']['name'] WITHOUT ANY VALIDATION !!
 				// On this example, obtain safe unique name from its binary data.
 				$shaFileName = sha1_file($file['upfile']['tmp_name']);
-				$fullPath = $uploadDir.$shaFileName.$ext;
+				$fullPath = $uploadDir.$shaFileName.'.'.$ext;
 				if ( !move_uploaded_file($file['upfile']['tmp_name'], sprintf($uploadDir.'%s.%s', $shaFileName, $ext)) ) {
 					throw new RuntimeException('Failed to move uploaded file.');
 				}

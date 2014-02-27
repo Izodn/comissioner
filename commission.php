@@ -13,11 +13,21 @@
 	else //If id not set
 		$commission = new commission(-1); //Will never exist
 	if($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
+		if(isset($_POST['title'])) { //Title change
+			$commission->changeTitle($_POST['title']);
+		}
 ?>
 <!DOCTYPE html>
 <html>
 	<head>
 		<title>Commissioner - Commission</title>
+		<script>
+			showChangeTitle = function() {
+				tgtElement = document.getElementById('titleContainer');
+				tgtTitle = document.getElementById('titleSpan');
+				tgtElement.innerHTML = '<form action="<?php echo $_SERVER['REQUEST_URI']; ?>" method="POST"><input type="test" name="title" value="'+tgtTitle.innerHTML+'"></form>';
+			}
+		</script>
 	</head>
 	<body>
 		<center>
@@ -36,17 +46,19 @@
 							'Input Time'	=>$commission->inputTime,
 							'Progress'		=>$commission->progressStatus,
 							'Payment'		=>$commission->paymentStatus,
-							'Gallary'		=>'' //We don't need valid data here
+							'Gallery'		=>'' //We don't need valid data here
 						);
 						echo '<table border="1"><tbody>';
 						foreach($data as $key=>$val) {
 							echo '<tr>';
 							echo '<td>'.$key.'</td>';
-							if( $key === 'Cost' )
+							if( $key === 'Title' )
+								echo '<td id="titleContainer"><span id="titleSpan" onclick="showChangeTitle();">'.$val.'</span></td>';
+							elseif( $key === 'Cost' )
 								echo '<td>'.moneyToStr($val).'</td>';
-							elseif( $key === 'Gallary' ) {
-								if( $commission->gallaryExists === true )
-									echo '<td><a href="gallary.php?c='.$commission->commissionId.'">Gallary</a>'; //Link to gallary
+							elseif( $key === 'Gallery' ) {
+								if( $commission->galleryExists === true )
+									echo '<td><a href="gallery.php?c='.$commission->commissionId.'">Gallery</a>'; //Link to gallery
 								else
 									echo '<td>No Images';
 								//Photo upload icon here
