@@ -5,10 +5,7 @@ A simple commission website for artists.
 
 
 Requirements:
-  PHP 5.3 +
-  PHP PDO
-  Apache 2.2.22 +
-  MySQL 5.5.29 +
+  PHP 5.3 +, PHP PDO, Apache 2.2.22 +, and MySQL 5.5.29 +
 
 How to setup:
   1. Copy files into web root of server
