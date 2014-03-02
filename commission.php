@@ -106,7 +106,8 @@
 							'Payment Option'=>$commission->paymentOption,
 							'Input Time'	=>$commission->inputTime,
 							'Progress'		=>$commission->progressStatus,
-							'Payment'		=>$commission->paymentStatus
+							'Payment'		=>$commission->paymentStatus,
+							'Gallery'		=>'' //We don't need valid data here
 						);
 						echo '<table border="1"><tbody>';
 						foreach($data as $key=>$val) {
@@ -114,6 +115,13 @@
 							echo '<td>'.$key.'</td>';
 							if( $key === 'Cost' )
 								echo '<td>'.moneyToStr($val).'</td>';
+							elseif( $key === 'Gallery' ) {
+								if( $commission->galleryExists === true )
+									echo '<td><a href="gallery.php?c='.$commission->commissionId.'">Gallery</a>'; //Link to gallery
+								else
+									echo '<td>No Images';
+								echo '</td>';
+							}
 							else
 								echo '<td>'.$val.'</td>';
 							echo '</tr>';

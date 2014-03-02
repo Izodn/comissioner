@@ -23,7 +23,8 @@
 		var $commissionerId;
 		var $clientId;
 		var $galleryExists = false;
-		var $images = array(); // 0-Index=>imageLocation
+		var $images = array(); // iImageId=>imageLocation
+		var $publicImages = array(); // iImageId=>1
 		var $error;
 		function __construct($id) {
 			global $dbh;
@@ -87,7 +88,8 @@ SQL;
 					$query = <<<SQL
 SELECT
 	iImageId as imageId,
-	cLocation as location
+	cLocation as location,
+	iIsPublic as isPublic
 FROM
 	COM_IMAGES
 WHERE
@@ -98,7 +100,9 @@ SQL;
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					foreach($results as $key=>$val) {
-						$this->images[count($this->images)] = $val['location'];
+						$this->images[$val['imageId']] = $val['location'];
+						if( $val['isPublic'] === '1' ) //Is public
+							$this->publicImages[$val['imageId']] = 1;
 					}
 				}
 			}
@@ -314,6 +318,10 @@ SQL;
 				$runQuery->bindParam(2, $this->commissionId);
 				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
+				/*
+				*	MAY WANT TO __construct($this->commissionId) HERE
+				*	TO REBUILD OBJ DUE TO NEW IMAGE
+				*/
 				return true;
 			} catch (RuntimeException $e) {
 				$this->error = $e->getMessage();

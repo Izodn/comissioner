@@ -5,7 +5,7 @@
 	if( empty($env['DEVELOPMENT']) || $env['DEVELOPMENT'] !== "1" ) {
 		error_reporting(0);
 	}
-	$dsn = 'mysql:dbname='.$env['DATABASE'].';host='.$env['DATABASE_LOCATION'].'';
+	$dsn = 'mysql:dbname='.$env['DATABASE'].';host='.$env['DATABASE_LOCATION'];
 	$user = $env['USER'];
 	$password = $env['PASS'];
 	$dbh = new PDO($dsn, $user, $password);

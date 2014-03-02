@@ -3,8 +3,8 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php'; //Include the hash functions
 	//START ERROR MESSAGES
-	define('USERNAME_TAKEN', 'That username is unavailable.');
-	define('INVALID_LOGIN', 'Username or password is incorrect.');
+	define('EMAIL_TAKEN', 'That email is already in use.');
+	define('INVALID_LOGIN', 'Email or password is incorrect.');
 	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
 	define('ACCOUNT_IN_USE', 'That payment option is in use, and can\'t be deleted.');
 	//END ERROR MESSAGES
@@ -13,15 +13,13 @@
 		var $salt;
 		var $hash_cost;
 		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
-		var $username;
 		var $password;
 		var $userId;
-		function __construct($username, $password = null) {
+		function __construct($email, $password = null) {
 			global $env; //We need the salt from env variables
 			$this->salt = isset($env['SALT']) ? $env['SALT'] : ''; //Default salt = ""
 			$this->hash_cost = isset($env['HASH_COST']) ? intVal($env['HASH_COST']) : 10; //Default cost = 10
-			$this->email = $username;
-			$this->username = $username;
+			$this->email = $email;
 			$this->password = $password === null ? null : $password; //If a password is provided, hash it otherwise save as null
 		}
 		function hash_pass($val) {
@@ -105,12 +103,12 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	cUsername = ?
+	cEmail = ?
 LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(1, $this->email);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" && password_verify($this->password, $result['cPassword'])) {
@@ -169,12 +167,12 @@ SELECT
 FROM
 	COM_USER
 WHERE
-	cUsername = ?
+	cEmail = ?
 LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->username);
+			$runQuery->bindParam(1, $this->email);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
@@ -187,7 +185,7 @@ SQL;
 					return true;
 				}
 				else {
-					$this->errMsg = USERNAME_TAKEN;
+					$this->errMsg = EMAIL_TAKEN;
 					return false;
 				}
 			}
@@ -195,18 +193,17 @@ SQL;
 				$pass = $this->password === null ? null : $this->hash_pass($this->password);
 				$query = <<<SQL
 INSERT INTO
-	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CUSERNAME, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
-VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
+VALUES (?, ?, ?, ?, ?, NOW(), ?)
 SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $firstName);
 				$runQuery->bindParam(2, $lastName);
 				$runQuery->bindParam(3, $this->email);
-				$runQuery->bindParam(4, $this->username);
 				//If password is null (created via commission entry), pass '' instead of attempting to hash
-				$runQuery->bindParam(5, $pass);
-				$runQuery->bindParam(6, $type);
-				$runQuery->bindParam(7, $isActive);
+				$runQuery->bindParam(4, $pass);
+				$runQuery->bindParam(5, $type);
+				$runQuery->bindParam(6, $isActive);
 				$runQuery->execute();
 				if($autoLogin === true) {
 					if(!$this->doLogin()) {

@@ -8,22 +8,23 @@
 			$this->userType = $userObj->getUserType();
 			if($this->userType === "commissioner" || $this->userType === "superuser") {
 				$this->addLink("Commissions", "/index.php");
-				$this->addLink("Public Galleries", "#");
-				$this->addLink("Settings", "settings.php");
-				$this->addLink("Reports", "#");
+				$this->addLink("Public Galleries", "/gallery.php");
+				$this->addLink("Settings", "/settings.php");
 				if($this->userType === "superuser")
-					$this->addLink("Admin Tools", "#");
+					$this->addLink("Admin Tools", "/adminTools.php");
 				$this->addLink("Logout", "/logout.php");
 				if( in_array(htmlentities($_SERVER['PHP_SELF']), array('/index.php', '/progress.php', '/commission.php', '/gallery.php'))) {
 					$this->addLink2('Input', '/index.php');
-					$this->addLink2('Progress', 'progress.php');
-					$this->addLink2('Pending Commission', '#');
-					$this->addLink2('Search', '#');
-					$this->addLink2('Archive', 'progress.php?archives=');
+					$this->addLink2('Progress', '/progress.php');
+					$this->addLink2('Archive', '/progress.php?archives=');
+				}
+				elseif( in_array(htmlentities($_SERVER['PHP_SELF']), array('/adminTools.php', '/commissionerRegister.php'))) {
+					$this->addLink2('Register Commissioner', '/commissionerRegister.php');
 				}
 			}
 			if($this->userType === "client") {
 				$this->addLink("Home", "/");
+				$this->addLink("Public Galleries", "/gallery.php");
 				$this->addLink("Logout", "/logout.php");
 			}
 		}

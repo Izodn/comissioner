@@ -195,12 +195,12 @@ SQL;
 				global $dbh;
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
-				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
+				$headers = array('Commission ID', 'Title', 'Commissioner Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
 				$query = <<<SQL
 SELECT
 	cc.iCommissionId,
 	cc.cTitle as title,
-	concat(cu.cFirstName,' ',cu.cLastName) as clientName,
+	concat(cu.cFirstName,' ',cu.cLastName) as commissionerName,
 	cc.cDescription as description,
 	cc.iCost as cost,
 	cc.dCreatedDate as inputTime,
@@ -210,7 +210,7 @@ SELECT
 FROM
 	COM_COMMISSION cc
 INNER JOIN
-	COM_USER cu ON cu.iUserId = cc.iClientId
+	COM_USER cu ON cu.iUserId = cc.iCommissionerId
 INNER JOIN
 	COM_PROGRESSSTATUS cpr ON cpr.iStatusId = cc.iProgressStatusId
 INNER JOIN

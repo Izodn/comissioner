@@ -11,6 +11,9 @@
 	if( isset($_POST['back']) ) {
 		header('Location: settings.php');
 	}
+	if( !empty($_GET['setupGallery']) ) {
+		header('Location: gallery.php?u='.$_SESSION['userObj']->getUserId().'&a='); //Navigate to gallery admin page
+	}
 	function defaultView() {
 		?>
 		<h3>Settings</h3>
@@ -26,7 +29,7 @@
 				<tr>
 					<td><input type="submit" name="setupGallery" value="Setup Gallery"></td>
 				</tr>
-			<table>
+			</table>
 		</form>
 		<?php
 	}
@@ -202,9 +205,6 @@ SQL;
 				}
 				elseif( !empty($_GET['manageAccount']) ) {
 					accountView();
-				}
-				elseif( !empty($_GET['setupGallery']) ) {
-					//Should navigate to gallery.php
 				}
 			?>
 		</center>
