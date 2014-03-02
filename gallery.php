@@ -127,6 +127,8 @@ FROM
 WHERE
 	iUserId = ? AND
 	iIsPublic = 1
+ORDER BY
+	imageId DESC
 SQL;
 					$runQuery = $dbh->prepare($query);
 					$runQuery->bindParam(1, $_GET['u']);
@@ -165,6 +167,8 @@ FROM
 	COM_COMMISSION
 WHERE
 	iCommissionerId = ?
+ORDER BY
+	commissionId DESC
 SQL;
 					$runQuery = $dbh->prepare($query);
 					$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());

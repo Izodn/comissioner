@@ -264,7 +264,7 @@ SQL;
 			*   http://us2.php.net/file_upload#114004
 			*/
 			$uploadDir = $env['IMAGE_LIB'];
-			$fileSize = 20000000; //Size in byte
+			$fileSize = intval( ($env['UPLOAD_SIZE_LIMIT']*1024)*1024 ); //Stored as MB, turn into B
 			$allowedTypes = array(
 				'jpg' => 'image/jpeg',
 				'png' => 'image/png',

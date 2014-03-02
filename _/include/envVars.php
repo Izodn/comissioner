@@ -14,6 +14,7 @@ DEBUGGING = 0
 SHOW_SUPERUSER_GALLERY = 1
 #
 IMAGE_LIB = clientside/
+UPLOAD_SIZE_LIMIT = 5
 ENV;
 	return $envString;
 	}

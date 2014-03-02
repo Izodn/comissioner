@@ -107,6 +107,8 @@ INNER JOIN
 WHERE
 	cc.iCommissionerId = ? AND
 	cc.iIsArchived = ?
+ORDER BY
+	iCommissionId ASC
 SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
