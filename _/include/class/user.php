@@ -1,0 +1,348 @@
+<?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php'; //Include the hash functions
+	//START ERROR MESSAGES
+	define('EMAIL_TAKEN', 'That email is already in use.');
+	define('INVALID_LOGIN', 'Email or password is incorrect.');
+	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
+	define('ACCOUNT_IN_USE', 'That payment option is in use, and can\'t be deleted.');
+	//END ERROR MESSAGES
+	class user {
+		var $errMsg;
+		var $salt;
+		var $hash_cost;
+		var $email; //Don't grab email directly for sensitive info. Use $this->getEmail() instead.
+		var $password;
+		var $userId;
+		function __construct($email, $password = null) {
+			global $env; //We need the salt from env variables
+			$this->salt = isset($env['SALT']) ? $env['SALT'] : ''; //Default salt = ""
+			$this->hash_cost = isset($env['HASH_COST']) ? intVal($env['HASH_COST']) : 10; //Default cost = 10
+			$this->email = $email;
+			$this->password = $password === null ? null : $password; //If a password is provided, hash it otherwise save as null
+		}
+		function hash_pass($val) {
+			return password_hash($val, PASSWORD_BCRYPT, array( 'SALT'=>$this->salt,'cost'=>$this->hash_cost ));
+		}
+		function getUserId() {
+			return $this->userId;
+		}
+		function getFirstName() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cFirstName
+FROM
+	COM_USER
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->userId);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cFirstName'];
+		}
+		function getLastName() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cLastName
+FROM
+	COM_USER
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->userId);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cLastName'];
+		}
+		function getEmail() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cEmail
+FROM
+	COM_USER
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->userId);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cEmail'];
+		}
+		function getUserType() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	cUserType
+FROM
+	COM_USER
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->userId);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['cUserType'];
+		}
+		function doLogin() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	count(iUserId) foundUser,
+	iIsActive,
+	cPassword,
+	iUserId
+FROM
+	COM_USER
+WHERE
+	cEmail = ?
+LIMIT
+	0,1
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->email);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			if( $result['foundUser'] === "1" && password_verify($this->password, $result['cPassword'])) {
+				$this->userId = $result['iUserId'];
+				$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	DLASTLOGIN = NOW()
+WHERE
+	IUSERID = ?
+SQL;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $this->userId);
+				$runQuery->execute();
+				return true;
+			}
+			else {
+				$this->errMsg = INVALID_LOGIN;
+				return false;
+			}
+		}
+		function doClaim($firstName, $lastName) { //Used to "claim" users created via commission-input
+			//This will need redone when email authentication in implemented
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	CFIRSTNAME = ?,
+	CLASTNAME = ?,
+	CPASSWORD = ?,
+	IISACTIVE = 1
+WHERE
+	CEMAIL = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $firstName);
+			$runQuery->bindParam(2, $lastName);
+			$runQuery->bindParam(3, $this->hash_pass($this->password));
+			$runQuery->bindParam(4, $this->email);
+			if(!$runQuery->execute()) {
+				$this->errMsg = SOMETHING_BROKE;
+				return false;
+			}
+			return true;
+		}
+		function doCreate($firstName, $lastName, $type="client", $autoLogin = true, $fromComInput = false) {
+			global $dbh;
+			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
+			$query = <<<SQL
+SELECT
+	count(iUserId) foundUser,
+	cPassword,
+	iIsActive
+FROM
+	COM_USER
+WHERE
+	cEmail = ?
+LIMIT
+	0,1
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->email);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
+				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
+					$this->doClaim($firstName, $lastName); //Claim user
+					if(!$this->doLogin()) {
+						$this->errMsg = SOMETHING_BROKE;
+						return false;
+					}
+					return true;
+				}
+				else {
+					$this->errMsg = EMAIL_TAKEN;
+					return false;
+				}
+			}
+			elseif($result['foundUser'] === '0') { //Only if no users found
+				$pass = $this->password === null ? null : $this->hash_pass($this->password);
+				$query = <<<SQL
+INSERT INTO
+	COM_USER (CFIRSTNAME, CLASTNAME, CEMAIL, CPASSWORD, CUSERTYPE, DCREATEDDATE, IISACTIVE)
+VALUES (?, ?, ?, ?, ?, NOW(), ?)
+SQL;
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $firstName);
+				$runQuery->bindParam(2, $lastName);
+				$runQuery->bindParam(3, $this->email);
+				//If password is null (created via commission entry), pass '' instead of attempting to hash
+				$runQuery->bindParam(4, $pass);
+				$runQuery->bindParam(5, $type);
+				$runQuery->bindParam(6, $isActive);
+				$runQuery->execute();
+				if($autoLogin === true) {
+					if(!$this->doLogin()) {
+						$this->errMsg = SOMETHING_BROKE;
+						return false;
+					}
+				}
+				if($type !== "client") {
+					$this->addPaymentOption('Credit / Debit');
+					$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
+				}
+				return true;
+			}
+			return true; //Should only get hit when inputting a commission for a user that hasn't been claimed yet
+		}
+		function changePass($newPass) {
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	CPASSWORD = ?,
+	DMODIFIEDDATE = NOW()
+WHERE
+	iUserId = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->hash_pass($newPass));
+			$runQuery->bindParam(2, $this->userId);
+			$runQuery->execute();
+			$this->password = $newPass;
+		}
+		function addPaymentOption($name) {
+			global $dbh;
+			$query = <<<SQL
+INSERT INTO
+	COM_ACCOUNT(CNAME, IUSERID, DCREATEDDATE)
+VALUES(?, ?, NOW())
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $name);
+			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->execute();
+			return true;
+		}
+		function getPaymentId($name) {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	IACCOUNTID
+FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ? AND
+	CNAME = ?
+LIMIT
+	0,1
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindParam(2, $name);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			return $result['IACCOUNTID'];
+		}
+		function changePaymentDefault($id) {
+			global $dbh;
+			//$query changes all to not default
+			$query = <<<SQL
+UPDATE
+	COM_ACCOUNT
+SET
+	IISDEFAULT = 0
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->execute();
+			//$query changes only the selected one to default
+			$query = <<<SQL
+UPDATE
+	COM_ACCOUNT
+SET
+	IISDEFAULT = 1
+WHERE
+	IACCOUNTID = ? AND
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $id);
+			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->execute();
+		}
+		function removePaymentOption($id) {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	count(iCommissionId) comCount
+FROM
+	COM_COMMISSION
+WHERE
+	iAccountId = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $id);
+			$runQuery->execute();
+			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
+			if($result['comCount'] !== '0') { //Can't delete payment options in use
+				$this->errMsg = ACCOUNT_IN_USE;
+				return false;
+			}
+			$query = <<<SQL
+DELETE FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ? AND
+	IACCOUNTID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindParam(2, $id);
+			$runQuery->execute();
+		}
+		function getPaymentOptions() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	CNAME,
+	IISDEFAULT
+FROM
+	COM_ACCOUNT
+WHERE
+	IUSERID = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->execute();
+			return($runQuery->fetchAll());
+		}
+	}
+?>
