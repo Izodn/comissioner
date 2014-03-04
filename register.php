@@ -14,12 +14,23 @@
 		}
 		else {
 			$userObj = new user($_POST['email'], $_POST['password']);
-			if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'])) { //Will return false if cannot create / login after create
-				$errMsg = $userObj->errMsg;
+			if( $env['PUBLIC_COMMISSIONER_REG'] === '1' && isset($_POST['userType'])) {
+				if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'], strtolower($_POST['userType']) )) { //Will return false if cannot create / login after create
+					$errMsg = $userObj->errMsg;
+				}
+				else {
+					$_SESSION['userObj'] = $userObj;
+					header('Location: index.php'); //Successfully created & logged in, goto index
+				}
 			}
 			else {
-				$_SESSION['userObj'] = $userObj;
-				header('Location: index.php'); //Successfully created & logged in, goto index
+				if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'])) { //Will return false if cannot create / login after create
+					$errMsg = $userObj->errMsg;
+				}
+				else {
+					$_SESSION['userObj'] = $userObj;
+					header('Location: index.php'); //Successfully created & logged in, goto index
+				}
 			}
 		}
 	}
@@ -73,6 +84,21 @@
 						<td>*Repeat Password: </td>
 						<td><input type="password" name="rPassword"></td>
 					</tr>
+					<?php
+						if( $env['PUBLIC_COMMISSIONER_REG'] === '1' ) { //Show type picker
+							?>
+								<tr>
+									<td>Account Type: </td>
+									<td>
+										<select name="userType">
+											<option selected="selected">Client</option>
+											<option>Commissioner</option>
+										</select>
+									</td>
+								</tr>
+							<?php
+						}
+					?>
 					<tr>
 						<td><input type="submit" name="register" value="Register"></td>
 					</tr>

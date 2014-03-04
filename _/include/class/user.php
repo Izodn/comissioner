@@ -7,6 +7,7 @@
 	define('INVALID_LOGIN', 'Email or password is incorrect.');
 	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
 	define('ACCOUNT_IN_USE', 'That payment option is in use, and can\'t be deleted.');
+	define('NO_REMOVE_DEFAULT', 'You cannot remove the default payment option.');
 	//END ERROR MESSAGES
 	class user {
 		var $errMsg;
@@ -131,7 +132,7 @@ SQL;
 				return false;
 			}
 		}
-		function doClaim($firstName, $lastName) { //Used to "claim" users created via commission-input
+		function doClaim($firstName, $lastName, $type='client') { //Used to "claim" users created via commission-input
 			//This will need redone when email authentication in implemented
 			global $dbh;
 			$query = <<<SQL
@@ -141,6 +142,7 @@ SET
 	CFIRSTNAME = ?,
 	CLASTNAME = ?,
 	CPASSWORD = ?,
+	CUSERTYPE = ?,
 	IISACTIVE = 1
 WHERE
 	CEMAIL = ?
@@ -149,14 +151,15 @@ SQL;
 			$runQuery->bindParam(1, $firstName);
 			$runQuery->bindParam(2, $lastName);
 			$runQuery->bindParam(3, $this->hash_pass($this->password));
-			$runQuery->bindParam(4, $this->email);
+			$runQuery->bindParam(4, $type);
+			$runQuery->bindParam(5, $this->email);
 			if(!$runQuery->execute()) {
 				$this->errMsg = SOMETHING_BROKE;
 				return false;
 			}
 			return true;
 		}
-		function doCreate($firstName, $lastName, $type="client", $autoLogin = true, $fromComInput = false) {
+		function doCreate($firstName, $lastName, $type = null, $autoLogin = true, $fromComInput = false) {
 			global $dbh;
 			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
 			$query = <<<SQL
@@ -177,7 +180,7 @@ SQL;
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
 				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
-					$this->doClaim($firstName, $lastName); //Claim user
+					$this->doClaim($firstName, $lastName, $type); //Claim user
 					if(!$this->doLogin()) {
 						$this->errMsg = SOMETHING_BROKE;
 						return false;
@@ -211,10 +214,13 @@ SQL;
 						return false;
 					}
 				}
-				if($type !== "client") {
+				/* I'm not sure we really need this yet.
+					We don't have credit/debit setup anyway, so just let the
+					commissioner add it.
+				if(in_array($type, array('commissioner', 'superuser'))) {
 					$this->addPaymentOption('Credit / Debit');
 					$this->changePaymentDefault($this->getPaymentId('Credit / Debit'));
-				}
+				}*/
 				return true;
 			}
 			return true; //Should only get hit when inputting a commission for a user that hasn't been claimed yet
@@ -238,14 +244,16 @@ SQL;
 		}
 		function addPaymentOption($name) {
 			global $dbh;
+			$default = ($this->getPaymentDefaultId() === false ? '1':'0');
 			$query = <<<SQL
 INSERT INTO
-	COM_ACCOUNT(CNAME, IUSERID, DCREATEDDATE)
-VALUES(?, ?, NOW())
+	COM_ACCOUNT(CNAME, IISDEFAULT, IUSERID, DCREATEDDATE)
+VALUES(?, ?, ?, NOW())
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindParam(1, $name);
-			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->bindParam(2, $default);
+			$runQuery->bindParam(3, $this->getUserId());
 			$runQuery->execute();
 			return true;
 		}
@@ -268,6 +276,25 @@ SQL;
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['IACCOUNTID'];
+		}
+		function getPaymentDefaultId() {
+			global $dbh;
+			$query = <<<SQL
+SELECT
+	iAccountId
+FROM
+	COM_ACCOUNT
+WHERE
+	iUserId = ? AND
+	iIsDefault = 1
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->execute();
+			if(!$result = $runQuery->fetch(PDO::FETCH_NUM))
+				return false;
+			else
+				return $result[0];
 		}
 		function changePaymentDefault($id) {
 			global $dbh;
@@ -300,6 +327,10 @@ SQL;
 		}
 		function removePaymentOption($id) {
 			global $dbh;
+			if($id === $this->getPaymentDefaultId()) {
+				$this->errMsg = NO_REMOVE_DEFAULT;
+				return false;
+			}
 			$query = <<<SQL
 SELECT
 	count(iCommissionId) comCount

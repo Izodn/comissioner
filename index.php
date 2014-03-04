@@ -65,7 +65,7 @@ SQL;
 			*/
 			//START CLIENT USER CREATE
 			$client = new user($_POST['email']); // Create client object
-			$client->doCreate($_POST['firstName'], $_POST['lastName'], 'client', /*AutoLogin*/false, /*FromCommissionInput*/true);
+			$client->doCreate($_POST['firstName'], $_POST['lastName'], /*UserType*/null, /*AutoLogin*/false, /*FromCommissionInput*/true);
 			//END CLIENT USER CREATE
 			$query = <<<SQL
 INSERT INTO
