@@ -12,7 +12,7 @@
 		$commission = new commission($_GET['id']); //Save $commission as commission obj
 	else //If id not set
 		$commission = new commission(-1); //Will never exist
-	if($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
+	if( ($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") && $commission->commissionerId === $_SESSION['userObj']->getUserId()) { //Is commissioner / superuser
 		if(isset($_POST['title'])) { //Title change
 			$commission->changeTitle($_POST['title']);
 		}
@@ -33,57 +33,54 @@
 		<center>
 			<?php
 				if( $commission->exists === true ) { //Make sure it's real
-					if($commission->commissionerId === $_SESSION['userObj']->getUserId()) {
 					//Make sure the user viewing this, owns the commission
-						$links = new links($_SESSION['userObj']);
-						echo $links->getLinks();
-						$data = array(
-							'Title'			=>$commission->title,
-							'Description'	=>$commission->description,
-							'Client Name'	=>$commission->clientName,
-							'Cost'			=>$commission->cost,
-							'Payment Option'=>$commission->paymentOption,
-							'Input Time'	=>$commission->inputTime,
-							'Progress'		=>$commission->progressStatus,
-							'Payment'		=>$commission->paymentStatus,
-							'Gallery'		=>'' //We don't need valid data here
-						);
-						echo '<table border="1"><tbody>';
-						foreach($data as $key=>$val) {
-							echo '<tr>';
-							echo '<td>'.$key.'</td>';
-							if( $key === 'Title' )
-								echo '<td id="titleContainer"><span id="titleSpan" onclick="showChangeTitle();">'.$val.'</span></td>';
-							elseif( $key === 'Cost' )
-								echo '<td>'.moneyToStr($val).'</td>';
-							elseif( $key === 'Gallery' ) {
-								if( $commission->galleryExists === true )
-									echo '<td><a href="gallery.php?c='.$commission->commissionId.'">Gallery</a>'; //Link to gallery
-								else
-									echo '<td>No Images';
-								//Photo upload icon here
-								echo '<a href="photo.php?c='.$commission->commissionId.'"><img src="/images/upload.jpg" align="right"></a>';
-								echo '</td>';
-							}
+					$links = new links($_SESSION['userObj']);
+					echo $links->getLinks();
+					$data = array(
+						'Title'			=>$commission->title,
+						'Description'	=>$commission->description,
+						'Client Name'	=>$commission->clientName,
+						'Cost'			=>$commission->cost,
+						'Payment Option'=>$commission->paymentOption,
+						'Input Time'	=>$commission->inputTime,
+						'Progress'		=>$commission->progressStatus,
+						'Payment'		=>$commission->paymentStatus,
+						'Gallery'		=>'' //We don't need valid data here
+					);
+					echo '<table border="1"><tbody>';
+					foreach($data as $key=>$val) {
+						echo '<tr>';
+						echo '<td>'.$key.'</td>';
+						if( $key === 'Title' )
+							echo '<td id="titleContainer"><span id="titleSpan" onclick="showChangeTitle();">'.$val.'</span></td>';
+						elseif( $key === 'Cost' )
+							echo '<td>'.moneyToStr($val).'</td>';
+						elseif( $key === 'Gallery' ) {
+							if( $commission->galleryExists === true )
+								echo '<td><a href="gallery.php?c='.$commission->commissionId.'">Gallery</a>'; //Link to gallery
 							else
-								echo '<td>'.$val.'</td>';
-							echo '</tr>';
+								echo '<td>No Images';
+							//Photo upload icon here
+							echo '<a href="photo.php?c='.$commission->commissionId.'"><img src="/images/upload.jpg" align="right"></a>';
+							echo '</td>';
 						}
-						echo '</tbody></table>';
+						else
+							echo '<td>'.$val.'</td>';
+						echo '</tr>';
 					}
-					else {
-						$errorMsg = 'You do not have permission to view this commission.';
-					}
-					if(isset($errorMsg))
-						echo '<font color="#FF0000">'.$errorMsg.'</font>';
+					echo '</tbody></table>';
 				}
+				else
+					$errorMsg = 'You do not have permission to view this commission.';
+				if(isset($errorMsg))
+					echo '<font color="#FF0000">'.$errorMsg.'</font>';
 			?>
 		</center>
 	</body>
 </html>
 <?php
 	}
-	elseif( $_SESSION['userObj']->getUserType() === "client" ) { //Is client
+	elseif( $_SESSION['userObj']->getUserType() === "client" || $commission->clientId === $_SESSION['userObj']->getUserId()) { //Is client
 ?>
 <!DOCTYPE html>
 <html>
@@ -101,7 +98,7 @@
 						$data = array(
 							'Title'			=>$commission->title,
 							'Description'	=>$commission->description,
-							'Client Name'	=>$commission->clientName,
+							'Commissioner'	=>$commission->commissionerName,
 							'Cost'			=>$commission->cost,
 							'Payment Option'=>$commission->paymentOption,
 							'Input Time'	=>$commission->inputTime,

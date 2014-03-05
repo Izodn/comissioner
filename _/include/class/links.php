@@ -17,6 +17,7 @@
 					$this->addLink2('Input', '/index.php');
 					$this->addLink2('Progress', '/progress.php');
 					$this->addLink2('Archive', '/progress.php?archives=');
+					$this->addLink2('My Commissions', '/progress.php?myCom=');
 				}
 				elseif( in_array(htmlentities($_SERVER['PHP_SELF']), array('/adminTools.php', '/commissionerRegister.php'))) {
 					$this->addLink2('Register Commissioner', '/commissionerRegister.php');

@@ -15,6 +15,7 @@
 		var $title;
 		var $description;
 		var $clientName;
+		var $commissionerName;
 		var $cost;
 		var $paymentOption;
 		var $inputTime;
@@ -35,7 +36,8 @@ SELECT
 	count(cc.iCommissionId) as commissionCount,
 	cc.cTitle as title,
 	cc.cDescription as description,
-	concat(cu.cFirstName, ' ', cu.cLastName) as clientName,
+	concat(cu1.cFirstName, ' ', cu1.cLastName) as clientName,
+	concat(cu2.cFirstName, ' ', cu2.cLastName) as commissionerName,
 	cc.iCost as cost,
 	ca.cName as paymentOption,
 	cc.dCreatedDate as inputTime,
@@ -50,7 +52,9 @@ SELECT
 FROM
 	COM_COMMISSION cc
 INNER JOIN
-	COM_USER cu ON cu.iUserId = cc.iCommissionerId
+	COM_USER cu1 ON cu1.iUserId = cc.iClientId
+INNER JOIN
+	COM_USER cu2 ON cu2.iUserId = cc.iCommissionerId
 INNER JOIN
 	COM_ACCOUNT ca ON ca.iAccountId = cc.iAccountId
 INNER JOIN
@@ -73,6 +77,7 @@ SQL;
 				$this->title = $result['title'];
 				$this->description = $result['description'];
 				$this->clientName = $result['clientName'];
+				$this->commissionerName = $result['commissionerName'];
 				$this->cost = $result['cost'];
 				$this->paymentOption = $result['paymentOption'];
 				$this->inputTime = $result['inputTime'];

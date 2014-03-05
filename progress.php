@@ -52,7 +52,11 @@
 				global $dbh;
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
-				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment', 'Archive');
+				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
+				if( !isset($_GET['myCom']) )
+					$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment', 'Archive');
+				else
+					$headers = array('Commission ID', 'Title', 'Commissioner', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
 				$progressSelOptions = array();
 				$query = <<<SQL
 SELECT
@@ -85,6 +89,8 @@ SQL;
 				while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 					$paymentSelOptions[count($paymentSelOptions)] = $row['cName'];
 				}
+				$whereId = isset($_GET['myCom']) ? 'cc.iClientId' : 'cc.iCommissionerId';
+				$userJoin = isset($_GET['myCom']) ? 'cc.iCommissionerId' : 'cc.iClientId';
 				$query = <<<SQL
 SELECT
 	cc.iCommissionId,
@@ -99,13 +105,19 @@ SELECT
 FROM
 	COM_COMMISSION cc
 INNER JOIN
-	COM_USER cu ON cu.iUserId = cc.iClientId
+	COM_USER cu ON cu.iUserId = 
+SQL;
+				$query .= $userJoin.' ';
+				$query .= <<<SQL
 INNER JOIN
 	COM_PROGRESSSTATUS cpr ON cpr.iStatusId = cc.iProgressStatusId
 INNER JOIN
 	COM_PAYMENTSTATUS cpa ON cpa.iStatusId = cc.iPaymentStatusId
 WHERE
-	cc.iCommissionerId = ? AND
+SQL;
+				$query .= ' '.$whereId.' = ? ';
+				$query .= <<<SQL
+	AND
 	cc.iIsArchived = ?
 ORDER BY
 	iCommissionId ASC
@@ -126,9 +138,11 @@ SQL;
 				//STOP modify each title to link to the unique commission page
 				$table->changeData('all', 'Commission ID', 'strToInput', array('hidden', 'commissionId[]'));
 				$table->changeData('all', 'Cost', 'moneyToStr');
-				$table->changeData('all', 'Archive', 'strToInput', array('checkbox', 'archive[]'));
-				$table->changeData('all', 'Progress', 'strToSelect', array('progress[]', $progressSelOptions, 'onChange="form.submit()"'));
-				$table->changeData('all', 'Payment', 'strToSelect', array('payment[]', $paymentSelOptions, 'onChange="form.submit()"'));
+				if( !isset($_GET['myCom']) ) {
+					$table->changeData('all', 'Archive', 'strToInput', array('checkbox', 'archive[]'));
+					$table->changeData('all', 'Progress', 'strToSelect', array('progress[]', $progressSelOptions, 'onChange="form.submit()"'));
+					$table->changeData('all', 'Payment', 'strToSelect', array('payment[]', $paymentSelOptions, 'onChange="form.submit()"'));
+				}
 				$table->hideColumn('Commission ID', /*HideHeader*/true, /*HideData*/false, /*ExcludeTh*/true, /*ExcludeTd*/true);
 				echo '<form action="'.htmlentities($_SERVER['REQUEST_URI']).'" method="POST">';
 				echo $table->getTable();
