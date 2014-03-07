@@ -14,7 +14,7 @@
 		}
 		else {
 			$userObj = new user($_POST['email'], $_POST['password']);
-			if( $env['PUBLIC_COMMISSIONER_REG'] === '1' && isset($_POST['userType'])) {
+			if( (isset($env['PUBLIC_COMMISSIONER_REG']) && $env['PUBLIC_COMMISSIONER_REG'] === '1') && isset($_POST['userType'])) {
 				if(!$userObj->doCreate($_POST['firstName'], $_POST['lastName'], strtolower($_POST['userType']) )) { //Will return false if cannot create / login after create
 					$errMsg = $userObj->errMsg;
 				}
@@ -85,7 +85,7 @@
 						<td><input type="password" name="rPassword"></td>
 					</tr>
 					<?php
-						if( $env['PUBLIC_COMMISSIONER_REG'] === '1' ) { //Show type picker
+						if( isset($env['PUBLIC_COMMISSIONER_REG']) && $env['PUBLIC_COMMISSIONER_REG'] === '1' ) { //Show type picker
 							?>
 								<tr>
 									<td>Account Type: </td>

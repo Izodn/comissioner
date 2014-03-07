@@ -1,4 +1,24 @@
 <?php
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/environment.php';
+	global $env;
+	$neededEnv = array('DATABASE_LOCATION','DATABASE','USER','PASS','IMAGE_LIB','UPLOAD_SIZE_LIMIT');
+	$neededEnvLen = count($neededEnv);
+	$needVarsErrMsg = 'The envVars file is missing the following needed variables: ';
+	$missingCount = 0;
+	$needVars = false;
+	for($a=0;$a<$neededEnvLen;$a++) {
+		if( !isset($env[$neededEnv[$a]]) || $env[$neededEnv[$a]]==='' ) {
+			if( $missingCount > 0 )
+				$needVarsErrMsg .= ', ';
+			$needVarsErrMsg .= $neededEnv[$a];
+			$needVars=true;
+			$missingCount++;
+		}
+	}
+	if( $needVars === true ) { //Show error, and die
+		echo $needVarsErrMsg.'.';
+		die(); //Prevent script exec
+	}
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	global $dbh;
 	$query = "SELECT iUserId FROM COM_USER LIMIT 0,1";

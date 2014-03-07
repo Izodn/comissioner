@@ -20,7 +20,7 @@
 			global $env; //We need the salt from env variables
 			$this->salt = isset($env['SALT']) ? $env['SALT'] : ''; //Default salt = ""
 			$this->hash_cost = isset($env['HASH_COST']) ? intVal($env['HASH_COST']) : 10; //Default cost = 10
-			$this->email = $email;
+			$this->email = strtolower($email); //Make sure to lower-case.
 			$this->password = $password === null ? null : $password; //If a password is provided, hash it otherwise save as null
 		}
 		function hash_pass($val) {

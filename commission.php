@@ -40,6 +40,7 @@
 						'Title'			=>$commission->title,
 						'Description'	=>$commission->description,
 						'Client Name'	=>$commission->clientName,
+						'Client Email'	=>$commission->clientEmail,
 						'Cost'			=>$commission->cost,
 						'Payment Option'=>$commission->paymentOption,
 						'Input Time'	=>$commission->inputTime,
@@ -64,6 +65,8 @@
 							echo '<a href="photo.php?c='.$commission->commissionId.'"><img src="/images/upload.jpg" align="right"></a>';
 							echo '</td>';
 						}
+						elseif( $key === 'Client Email' )
+							echo '<td><a href="mailto:'.$val.'">'.$val.'</a>';
 						else
 							echo '<td>'.$val.'</td>';
 						echo '</tr>';
@@ -96,15 +99,16 @@
 						$links = new links($_SESSION['userObj']);
 						echo $links->getLinks();
 						$data = array(
-							'Title'			=>$commission->title,
-							'Description'	=>$commission->description,
-							'Commissioner'	=>$commission->commissionerName,
-							'Cost'			=>$commission->cost,
-							'Payment Option'=>$commission->paymentOption,
-							'Input Time'	=>$commission->inputTime,
-							'Progress'		=>$commission->progressStatus,
-							'Payment'		=>$commission->paymentStatus,
-							'Gallery'		=>'' //We don't need valid data here
+							'Title'					=>$commission->title,
+							'Description'			=>$commission->description,
+							'Commissioner'			=>$commission->commissionerName,
+							'Commissioner Email'	=>$commission->commissionerEmail,
+							'Cost'					=>$commission->cost,
+							'Payment Option'		=>$commission->paymentOption,
+							'Input Time'			=>$commission->inputTime,
+							'Progress'				=>$commission->progressStatus,
+							'Payment'				=>$commission->paymentStatus,
+							'Gallery'				=>'' //We don't need valid data here
 						);
 						echo '<table border="1"><tbody>';
 						foreach($data as $key=>$val) {
@@ -119,6 +123,8 @@
 									echo '<td>No Images';
 								echo '</td>';
 							}
+							elseif( $key === 'Commissioner Email' )
+								echo '<td><a href="mailto:'.$val.'">'.$val.'</a>';
 							else
 								echo '<td>'.$val.'</td>';
 							echo '</tr>';

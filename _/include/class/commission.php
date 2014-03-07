@@ -15,6 +15,7 @@
 		var $title;
 		var $description;
 		var $clientName;
+		var $clientEmail;
 		var $commissionerName;
 		var $cost;
 		var $paymentOption;
@@ -37,7 +38,9 @@ SELECT
 	cc.cTitle as title,
 	cc.cDescription as description,
 	concat(cu1.cFirstName, ' ', cu1.cLastName) as clientName,
+	cu1.cEmail as clientEmail,
 	concat(cu2.cFirstName, ' ', cu2.cLastName) as commissionerName,
+	cu2.cEmail as commissionerEmail,
 	cc.iCost as cost,
 	ca.cName as paymentOption,
 	cc.dCreatedDate as inputTime,
@@ -77,7 +80,9 @@ SQL;
 				$this->title = $result['title'];
 				$this->description = $result['description'];
 				$this->clientName = $result['clientName'];
+				$this->clientEmail = $result['clientEmail'];
 				$this->commissionerName = $result['commissionerName'];
+				$this->commissionerEmail = $result['commissionerEmail'];
 				$this->cost = $result['cost'];
 				$this->paymentOption = $result['paymentOption'];
 				$this->inputTime = $result['inputTime'];

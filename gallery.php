@@ -250,7 +250,7 @@ FROM (
 	WHERE
 		cu.cUserType = 'commissioner'
 SQL;
-					if($env['SHOW_SUPERUSER_GALLERY'] === '1') { //If we need to show superuser in the gallery list
+					if(isset( $env['SHOW_SUPERUSER_GALLERY'] ) && $env['SHOW_SUPERUSER_GALLERY'] === '1') { //If we need to show superuser in the gallery list
 						$query .= <<<SQL
 
 OR cu.cUserType = 'superuser'

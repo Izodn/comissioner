@@ -106,19 +106,24 @@ SQL;
 					<?php
 						$query = <<<SQL
 SELECT DISTINCT
-	cu.CEMAIL
+	cu.CEMAIL,
+	concat(cu.cLastName,', ', cu.cFirstName) as clientName
 FROM
 	COM_USER cu
 INNER JOIN
 	COM_COMMISSION cc ON cc.ICLIENTID = cu.IUSERID
 WHERE
 	cc.ICOMMISSIONERID = ?
+ORDER BY
+	clientName ASC
 SQL;
 						$runQuery = $dbh->prepare($query);
 						$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
 						$runQuery->execute();
 						while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
-							echo '<option value="'.$row['CEMAIL'].'"'.(!empty($_GET['autoFill']) && $_GET['autoFill'] === $row['CEMAIL'] ? 'selected="selected"' : '').'>'.$row['CEMAIL'].'</option>';
+							//I don't think we need to hide these emails as they were given to the commissioner initially.
+							//We're just displaying name instead for read-ability.
+							echo '<option value="'.$row['CEMAIL'].'"'.(!empty($_GET['autoFill']) && $_GET['autoFill'] === $row['CEMAIL'] ? 'selected="selected"' : '').'>'.$row['clientName'].'</option>';
 						}
 					?>
 				</select>
