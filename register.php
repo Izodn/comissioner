@@ -91,8 +91,8 @@
 									<td>Account Type: </td>
 									<td>
 										<select name="userType">
-											<option selected="selected">Client</option>
-											<option>Commissioner</option>
+											<option <?php echo !empty($_POST['userType'])&&$_POST['userType']==='Client'?'selected="selected"':'';?>>Client</option>
+											<option <?php echo !empty($_POST['userType'])&&$_POST['userType']==='Commissioner'?'selected="selected"':'';?>>Commissioner</option>
 										</select>
 									</td>
 								</tr>

@@ -4,6 +4,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php'; //Include the hash functions
 	//START ERROR MESSAGES
 	define('EMAIL_TAKEN', 'That email is already in use.');
+	define('INVALID_EMAIL', 'This isn\'t a valid email address.');
 	define('INVALID_LOGIN', 'Email or password is incorrect.');
 	define('SOMETHING_BROKE', 'Oops! Something broke. If this issue persists please contact an admin.');
 	define('ACCOUNT_IN_USE', 'That payment option is in use, and can\'t be deleted.');
@@ -17,10 +18,11 @@
 		var $password;
 		var $userId;
 		function __construct($email, $password = null) {
+			$email = strtolower($email); //Make sure to lower-case
 			global $env; //We need the salt from env variables
 			$this->salt = isset($env['SALT']) ? $env['SALT'] : ''; //Default salt = ""
 			$this->hash_cost = isset($env['HASH_COST']) ? intVal($env['HASH_COST']) : 10; //Default cost = 10
-			$this->email = strtolower($email); //Make sure to lower-case.
+			$this->email = $email;
 			$this->password = $password === null ? null : $password; //If a password is provided, hash it otherwise save as null
 		}
 		function hash_pass($val) {
@@ -160,6 +162,10 @@ SQL;
 			return true;
 		}
 		function doCreate($firstName, $lastName, $type = null, $autoLogin = true, $fromComInput = false) {
+			if( !filter_var($this->email, FILTER_VALIDATE_EMAIL) ) { //Check to see if we're given an email
+				$this->errMsg = INVALID_EMAIL;
+				return false;
+			}
 			global $dbh;
 			$isActive = $this->password !== null ? "1" : "0"; //If password is set as null (User created by commission entry), set to not active.
 			$query = <<<SQL
@@ -241,6 +247,52 @@ SQL;
 			$runQuery->bindParam(2, $this->userId);
 			$runQuery->execute();
 			$this->password = $newPass;
+		}
+		function changeEmail($newEmail) {
+			if( !$this->checkEmail($newEmail) ) { //Email's taken/invalid
+				//No need to set error here, it's set in checkEmail()
+				return false;
+			}
+			global $dbh;
+			$query = <<<SQL
+UPDATE
+	COM_USER
+SET
+	cEmail = ?
+WHERE
+	iUserId = ?
+SQL;
+			$runQuery = $dbh->prepare($query);
+			$runQuery->bindParam(1, $newEmail);
+			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->execute();
+			$this->email = $newEmail;
+			return true;
+		}
+		function checkEmail($email) {
+			if( !filter_var($email, FILTER_VALIDATE_EMAIL) ) { //Check to see if we're given an email
+				$this->errMsg = INVALID_EMAIL;
+				return false;
+			}
+			global $dbh;
+			$email = strtolower($email); //We want case insensitive checks.
+			$query = <<<SQL
+SELECT
+	count(iUserId)
+FROM
+	COM_USER
+WHERE
+	cEmail = ?
+SQL;
+			$runQuery =  $dbh->prepare($query);
+			$runQuery->bindParam(1, $email);
+			$runQuery->execute();
+			$result = $runQuery->fetchall(PDO::FETCH_NUM);
+			if( $result[0][0] !== '0' ) { //If email is in use
+				$this->errMsg = EMAIL_TAKEN;
+				return false;
+			}
+			return true; //It's good-to-go, let's return
 		}
 		function addPaymentOption($name) {
 			global $dbh;

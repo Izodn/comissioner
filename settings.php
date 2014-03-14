@@ -9,7 +9,10 @@
 		header('Location: /'); //Not allowed, go away
 	
 	if( isset($_POST['back']) ) {
-		header('Location: settings.php');
+		if( isset($_GET['manageAccount']) && (isset($_POST['oldEmail']) || isset($_POST['oldPass'])) )
+			header('Location: settings.php?manageAccount=Manage Account');
+		else
+			header('Location: settings.php');
 	}
 	if( !empty($_GET['setupGallery']) ) {
 		header('Location: gallery.php?u='.$_SESSION['userObj']->getUserId().'&a='); //Navigate to gallery admin page
@@ -120,7 +123,7 @@ SQL;
 			if(isset($errMsg))
 				echo '<font color="#FF0000">'.$errMsg.'</font>';
 	}
-	function accountView() {
+	function accountView($type="none") {
 		global $dbh;
 		if( isset($_POST['changePass']) ) {
 			if( empty($_POST['oldPass']) || empty($_POST['newPass']) || empty($_POST['rNewPass']) ) {
@@ -151,35 +154,108 @@ SQL;
 				}
 			}
 		}
+		if( isset($_POST['changeEmail']) ) {
+			if( empty($_POST['oldEmail']) || empty($_POST['newEmail']) || empty($_POST['rNewEmail']) ) {
+				$errMsg = "Please fill out all password fields";
+			}
+			elseif( $_POST['newEmail'] !== $_POST['rNewEmail'] ) {
+				$errMsg = "New emails must match";
+			}
+			else {
+				$newEmail = strtolower($_POST['newEmail']);
+				$oldEmail = strtolower($_POST['oldEmail']);
+				if( $oldEmail !== $_SESSION['userObj']->email )
+					$errMsg = "Current email was wrong.";
+				else {
+					if( !$_SESSION['userObj']->changeEmail($newEmail) ) { //Call it this way so we catch the error
+						$errMsg = $_SESSION['userObj']->errMsg;
+					}
+					else {
+						$successMsg = "Email changed";
+					}
+				}
+			}
+		}
 		?>
 		<h3>Account Management</h3>
 		<br>
-		<p>Password Change</p>
-		<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
-			<table>
-				<tr>
-					<td>Old Password: </td>
-					<td><input type="password" name="oldPass"></td>
-				</tr>
-				<tr>
-					<td>New Password: </td>
-					<td><input type="password" name="newPass"></td>
-				</tr>
-				<tr>
-					<td>Repeat New Password: </td>
-					<td><input type="password" name="rNewPass"></td>
-				</tr>
-				<tr>
-					<td></td>
-					<td><input type="submit" name="changePass" value="Change Password"></td>
-				</tr>
-				<tr>
-					<td><input type="submit" name="back" value="Back"></td>
-					<td></td>
-				</tr>
-			</table>
-		</form>
 		<?php
+		if( $type==="password" ) {
+			?>
+			<p>Password Change</p>
+			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
+				<input type="hidden" name="type" value="password">
+				<table>
+					<tr>
+						<td>Old Password: </td>
+						<td><input type="password" name="oldPass"></td>
+					</tr>
+					<tr>
+						<td>New Password: </td>
+						<td><input type="password" name="newPass"></td>
+					</tr>
+					<tr>
+						<td>Repeat New Password: </td>
+						<td><input type="password" name="rNewPass"></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><input type="submit" name="changePass" value="Change Password"></td>
+					</tr>
+					<tr>
+						<td><input type="submit" name="back" value="Back"></td>
+						<td></td>
+					</tr>
+				</table>
+			</form>
+			<?php
+		}
+		elseif( $type==="email" ) {
+			?>
+			<p>Email Change</p>
+			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
+				<input type="hidden" name="type" value="email">
+				<table>
+					<tr>
+						<td>Current Email: </td>
+						<td><input type="text" name="oldEmail"></td>
+					</tr>
+					<tr>
+						<td>New Email: </td>
+						<td><input type="text" name="newEmail"></td>
+					</tr>
+					<tr>
+						<td>Repeat New Email: </td>
+						<td><input type="text" name="rNewEmail"></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td><input type="submit" name="changeEmail" value="Change Email"></td>
+					</tr>
+					<tr>
+						<td><input type="submit" name="back" value="Back"></td>
+						<td></td>
+					</tr>
+				</table>
+			</form>
+			<?php
+		}
+		else {
+			?>
+			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
+				<input type="hidden" name="type" value="password">
+				<input type="submit" value="Change Password">
+			</form>
+			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
+				<input type="hidden" name="type" value="email">
+				<input type="submit" value="Change Email">
+			</form>
+			<br>
+			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
+				<input type="submit" name="back" value="Back">
+			</form>
+			<?php
+		}
 		if( isset($errMsg) ) {
 			echo '<br><font color="#FF0000">'.$errMsg.'</font>';
 		}
@@ -204,7 +280,12 @@ SQL;
 					paymentView();
 				}
 				elseif( !empty($_GET['manageAccount']) ) {
-					accountView();
+					if( isset($_POST['type']) && $_POST['type'] === 'password' )
+						accountView("password");
+					elseif( isset($_POST['type']) && $_POST['type'] === 'email' )
+						accountView("email");
+					else
+						accountView("none");
 				}
 			?>
 		</center>

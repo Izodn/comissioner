@@ -65,24 +65,27 @@ SQL;
 			*/
 			//START CLIENT USER CREATE
 			$client = new user($_POST['email']); // Create client object
-			$client->doCreate($_POST['firstName'], $_POST['lastName'], /*UserType*/null, /*AutoLogin*/false, /*FromCommissionInput*/true);
-			//END CLIENT USER CREATE
-			$query = <<<SQL
+			if(!$client->doCreate($_POST['firstName'], $_POST['lastName'], /*UserType*/null, /*AutoLogin*/false, /*FromCommissionInput*/true))
+				$errMsg = $client->errMsg;
+			else {
+				//END CLIENT USER CREATE
+				$query = <<<SQL
 INSERT INTO
 	COM_COMMISSION(CTITLE, CDESCRIPTION, ICLIENTID, ICOMMISSIONERID, ICOST, IACCOUNTID, IPAYMENTSTATUSID, IPROGRESSSTATUSID, IISARCHIVED, DCREATEDDATE)
 VALUES(?, ?, (SELECT IUSERID FROM COM_USER WHERE CEMAIL = ?), ?, ?, ?, 1, 1, 0, NOW())
 SQL;
-			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $_POST['title']);
-			$runQuery->bindParam(2, $description);
-			$runQuery->bindParam(3, $_POST['email']);
-			$runQuery->bindParam(4, $_SESSION['userObj']->getUserId());
-			$runQuery->bindParam(5, $cost); //Use already formatted cost var
-			$runQuery->bindParam(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
-			if(!$runQuery->execute())
-				$errMsg = "Could not submit commission...";
-			else
-				$successMsg = "Successful!";
+				$runQuery = $dbh->prepare($query);
+				$runQuery->bindParam(1, $_POST['title']);
+				$runQuery->bindParam(2, $description);
+				$runQuery->bindParam(3, $_POST['email']);
+				$runQuery->bindParam(4, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(5, $cost); //Use already formatted cost var
+				$runQuery->bindParam(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
+				if(!$runQuery->execute())
+					$errMsg = "Could not submit commission...";
+				else
+					$successMsg = "Successful!";
+			}
 		}
 		elseif( isset($_POST['submit']) ) {
 			$errMsg = "Please fill out all required fields";
