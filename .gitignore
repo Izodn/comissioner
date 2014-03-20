@@ -3,4 +3,4 @@ clientside/
 #Covering this will be included in an install tutorial. No need for it anymore
 _/include/envVars.php
 #This is a godaddy thing, probably don't need it either
-status/
+stats/
