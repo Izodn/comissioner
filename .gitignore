@@ -4,3 +4,4 @@ clientside/
 _/include/envVars.php
 #This is a godaddy thing, probably don't need it either
 stats/
+test/
