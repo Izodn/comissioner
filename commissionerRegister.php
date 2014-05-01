@@ -38,23 +38,23 @@
 				<table>
 					<tr>
 						<td>First Name: </td>
-						<td><input type="text" name="firstName"<?php echo $value=!empty($_POST['firstName'])?' value="'.htmlentities($_POST['firstName']).'"':"" ?>></td>
+						<td><input type="text" name="firstName" maxlength="255"<?php echo $value=!empty($_POST['firstName'])?' value="'.htmlentities($_POST['firstName']).'"':"" ?>></td>
 					</tr>
 					<tr>
 						<td>Last Name: </td>
-						<td><input type="text" name="lastName"<?php echo $value=!empty($_POST['lastName'])?' value="'.htmlentities($_POST['lastName']).'"':"" ?>></td>
+						<td><input type="text" name="lastName" maxlength="255"<?php echo $value=!empty($_POST['lastName'])?' value="'.htmlentities($_POST['lastName']).'"':"" ?>></td>
 					</tr>
 					<tr>
 						<td>Email: </td>
-						<td><input type="text" name="email"<?php echo $value=!empty($_POST['email'])?' value="'.htmlentities($_POST['email']).'"':"" ?>></td>
+						<td><input type="text" name="email" maxlength="255"<?php echo $value=!empty($_POST['email'])?' value="'.htmlentities($_POST['email']).'"':"" ?>></td>
 					</tr>
 					<tr>
 						<td>*Password: </td>
-						<td><input type="password" name="password"></td>
+						<td><input type="password" maxlength="255" name="password"></td>
 					</tr>
 					<tr>
 						<td>*Repeat Password: </td>
-						<td><input type="password" name="rPassword"></td>
+						<td><input type="password" maxlength="255" name="rPassword"></td>
 					</tr>
 					<tr>
 						<td><input type="submit" name="register" value="Register"></td>

@@ -6,6 +6,7 @@
 	define('PROGRESS_STATUS_NOT_EXIST', 'Tried using progress status that doesn\'t exist.');
 	define('TITLE_CHANGE_FAIL', 'Could not change the title of commission.');
 	class commission {
+		var $directoryMask = 0775;
 		var $commissionId;
 		var $exists = false; //Always true or false
 		var $userId;
@@ -274,6 +275,9 @@ SQL;
 			*   http://us2.php.net/file_upload#114004
 			*/
 			$uploadDir = $env['IMAGE_LIB'];
+			if( !file_exists($uploadDir) ) { //Dir doesn't exist, let's create it.
+				mkdir($uploadDir, $this->directoryMask);
+			}
 			$fileSize = intval( ($env['UPLOAD_SIZE_LIMIT']*1024)*1024 ); //Stored as MB, turn into B
 			$allowedTypes = array(
 				'jpg' => 'image/jpeg',
@@ -314,7 +318,7 @@ SQL;
 				// You should name it uniquely.
 				// DO NOT USE $file['upfile']['name'] WITHOUT ANY VALIDATION !!
 				// On this example, obtain safe unique name from its binary data.
-				$shaFileName = sha1_file($file['upfile']['tmp_name']);
+				$shaFileName = sha1_file($file['upfile']['tmp_name']).md5(rand(0,9999)); //Append random incase the user double-uploads same photo.
 				$fullPath = $uploadDir.$shaFileName.'.'.$ext;
 				if ( !move_uploaded_file($file['upfile']['tmp_name'], sprintf($uploadDir.'%s.%s', $shaFileName, $ext)) ) {
 					throw new RuntimeException('Failed to move uploaded file.');
@@ -326,7 +330,7 @@ SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $fullPath);
 				$runQuery->bindParam(2, $this->commissionId);
-				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(3, $this->userId);
 				$runQuery->execute();
 				/*
 				*	MAY WANT TO __construct($this->commissionId) HERE

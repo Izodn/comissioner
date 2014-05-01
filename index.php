@@ -7,6 +7,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
 	requireLogin();
+	$userId = $_SESSION['userObj']->getUserId();
 	if($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") { //Is commissioner / superuser
 		global $dbh;
 		if(!empty($_GET['autoFill'])) {
@@ -43,7 +44,7 @@ LIMIT
 	0,1
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindParam(1, $userId);
 		$runQuery->execute();
 		$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 		if( $result['IACCOUNTID'] == null ) { //If no payment options go to settings page
@@ -75,12 +76,13 @@ INSERT INTO
 VALUES(?, ?, (SELECT IUSERID FROM COM_USER WHERE CEMAIL = ?), ?, ?, ?, 1, 1, 0, NOW())
 SQL;
 				$runQuery = $dbh->prepare($query);
+				$paymentId = $_SESSION['userObj']->getPaymentId($_POST['paymentOption']);
 				$runQuery->bindParam(1, $_POST['title']);
 				$runQuery->bindParam(2, $description);
 				$runQuery->bindParam(3, $_POST['email']);
-				$runQuery->bindParam(4, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(4, $userId);
 				$runQuery->bindParam(5, $cost); //Use already formatted cost var
-				$runQuery->bindParam(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
+				$runQuery->bindParam(6, $paymentId);
 				if(!$runQuery->execute())
 					$errMsg = "Could not submit commission...";
 				else
@@ -95,6 +97,39 @@ SQL;
 <html>
 	<head>
 		<title>Commissioner - Home</title>
+		<script>
+			formatMoney = function(ele) {
+				allowed = ["0","1","2","3","4","5","6","7","8","9"];
+				retVal = ''; 
+				val = ele.value;
+				valLen = val.length;
+				for(a=0;a<valLen;a++) {
+					if( allowed.indexOf(val[a]) !== -1 ) { //Make sure character is allowed
+						if( typeof retVal[0] !== 'undefined' || val[a] !== '0' ) { //Avoid prefixing "0"
+							retVal += val[a];
+						}
+					}
+				}
+				retValLen = retVal.length;
+				if( retValLen >= 2 )
+					lastTwo = retVal[retValLen-2]+retVal[retValLen-1];
+				else if( retValLen === 1 )
+					lastTwo = "0"+retVal[retValLen-1];
+				else
+					lastTwo = "00";
+				buffer="";
+				for(a=0;a<retValLen;a++) {
+					if(a < retValLen-2)
+						buffer += retVal[a];
+				}
+				if( buffer === "" )
+					buffer = "0"
+				retVal = buffer+"."+lastTwo;
+				if( retVal.length > 0 )
+					retVal = '$'+retVal;
+				ele.value = retVal;
+			}
+		</script>
 	</head>
 	<body>
 		<center>
@@ -121,12 +156,26 @@ ORDER BY
 	clientName ASC
 SQL;
 						$runQuery = $dbh->prepare($query);
-						$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+						$runQuery->bindParam(1, $userId);
 						$runQuery->execute();
 						while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 							//I don't think we need to hide these emails as they were given to the commissioner initially.
 							//We're just displaying name instead for read-ability.
-							echo '<option value="'.$row['CEMAIL'].'"'.(!empty($_GET['autoFill']) && $_GET['autoFill'] === $row['CEMAIL'] ? 'selected="selected"' : '').'>'.$row['clientName'].'</option>';
+							$clientName = $row['clientName'];
+							$tmpClientName = explode(', ', $row['clientName']);
+							if( count($tmpClientName) == 2) { //Make sure we have the right number of indexes
+								//Here's where we'll trim the names to avoid giant select boxes
+								if( strLen($tmpClientName[0]) > 22 ) {
+									$tmpClientName[0] = trim(subStr($tmpClientName[0], 0, 22).'...');
+								}
+								if( strLen($tmpClientName[1]) > 22 ) {
+									$tmpClientName[1] = trim(subStr($tmpClientName[1], 0, 22).'...');
+								}
+								$clientName = implode( $tmpClientName, ', ' );
+							}
+							echo '<option value="'.$row['CEMAIL'].'"'.(
+								!empty($_GET['autoFill']) && $_GET['autoFill'] === $row['CEMAIL'] ? 'selected="selected"' : ''
+							).'>'.$clientName.'</option>';
 						}
 					?>
 				</select>
@@ -157,7 +206,7 @@ SQL;
 						<td><input type="text" name="title" size='16' maxlength="32" ></td>
 					<tr>
 						<td>Price:<font color="red">*</font></td>
-						<td><input type="text" name="cost" size='16' maxlength="8" ></td>
+						<td><input type="text" name="cost" size='16' maxlength="8" oninput="formatMoney(this);" value="$0.00"></td>
 					</tr>
 					<tr>
 						<td>Payment Option:<font color="red">*</font></td>
@@ -227,7 +276,7 @@ WHERE
 	cc.iClientId = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(1, $userId);
 				$runQuery->execute();
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
 				$table = new table($headers, $result);

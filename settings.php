@@ -1,10 +1,12 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
+	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/user.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/links.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/password.php';
-	session_start();
+	requireLogin();
+	$userId = $_SESSION['userObj']->getUserId();
 	if( !isset($_SESSION['userObj']) && ($_SESSION['userObj']->getUserType() === "superuser" || $_SESSION['userObj']->getUserType() === "commissioner") )
 		header('Location: /'); //Not allowed, go away
 	
@@ -37,6 +39,7 @@
 		<?php
 	}
 	function paymentView() {
+		$userId = $_SESSION['userObj']->getUserId();
 		global $dbh;
 		if( isset($_POST['addPaymentOption']) ) {
 			if( !empty($_POST['paymentOptionName'])  ) {
@@ -64,7 +67,7 @@ WHERE
 	IUSERID = ?
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindParam(1, $userId);
 		$runQuery->execute();
 		?>
 		<h3>Payment Options</h3>
@@ -110,7 +113,7 @@ SQL;
 		<table>
 			<form action="<?php echo htmlentities($_SERVER['REQUEST_URI']); ?>" method="POST">
 				<tr>
-					<td><input type="text" name="paymentOptionName" placeholder="Name of payment option"></td>
+					<td><input type="text" maxlength="31" name="paymentOptionName" placeholder="Name of payment option"></td>
 					<td><input type="submit" name="addPaymentOption" value="Add Payment Option"></td>
 				</tr>
 				<tr>
@@ -124,6 +127,7 @@ SQL;
 				echo '<font color="#FF0000">'.$errMsg.'</font>';
 	}
 	function accountView($type="none") {
+		$userId = $_SESSION['userObj']->getUserId();
 		global $dbh;
 		if( isset($_POST['changePass']) ) {
 			if( empty($_POST['oldPass']) || empty($_POST['newPass']) || empty($_POST['rNewPass']) ) {
@@ -142,7 +146,7 @@ WHERE
 	IUSERID = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(1, $userId);
 				$runQuery->execute();
 				$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 				if( password_verify($_POST['oldPass'], $result['CPASSWORD']) ) {
@@ -188,15 +192,15 @@ SQL;
 				<table>
 					<tr>
 						<td>Old Password: </td>
-						<td><input type="password" name="oldPass"></td>
+						<td><input type="password" maxlength="255" name="oldPass"></td>
 					</tr>
 					<tr>
 						<td>New Password: </td>
-						<td><input type="password" name="newPass"></td>
+						<td><input type="password" maxlength="255" name="newPass"></td>
 					</tr>
 					<tr>
 						<td>Repeat New Password: </td>
-						<td><input type="password" name="rNewPass"></td>
+						<td><input type="password" maxlength="255" name="rNewPass"></td>
 					</tr>
 					<tr>
 						<td></td>
@@ -218,15 +222,15 @@ SQL;
 				<table>
 					<tr>
 						<td>Current Email: </td>
-						<td><input type="text" name="oldEmail"></td>
+						<td><input type="text" maxlength="255" name="oldEmail"></td>
 					</tr>
 					<tr>
 						<td>New Email: </td>
-						<td><input type="text" name="newEmail"></td>
+						<td><input type="text" maxlength="255" name="newEmail"></td>
 					</tr>
 					<tr>
 						<td>Repeat New Email: </td>
-						<td><input type="text" name="rNewEmail"></td>
+						<td><input type="text" maxlength="255" name="rNewEmail"></td>
 					</tr>
 					<tr>
 						<td></td>

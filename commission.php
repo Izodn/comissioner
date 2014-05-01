@@ -6,7 +6,6 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
-	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	requireLogin();
 	if(isset($_GET['id']) && $_GET['id'] !== '')
 		$commission = new commission($_GET['id']); //Save $commission as commission obj

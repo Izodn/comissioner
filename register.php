@@ -57,6 +57,17 @@
 			hideDetails = function() {
 				document.getElementById("passwdDetails").innerHTML = defaultDetails;
 			}
+			emailNotice = function(selOption) {
+				var emailElement = document.getElementById("email");
+				if(selOption == 'Client') {
+					newText = emailElement.innerHTML.replace(' <font color="#FF0000">(public)</font>', '');
+					document.getElementById("email").innerHTML = newText;
+				}
+				else {
+					newText = emailElement.innerHTML + ' <font color="#FF0000">(public)</font>';
+					document.getElementById("email").innerHTML = newText;
+				}
+			}
 		</script>
 	</head>
 	<body>
@@ -66,23 +77,23 @@
 				<table>
 					<tr>
 						<td>First Name: </td>
-						<td><input type="text" name="firstName"<?php echo $value=!empty($_POST['firstName'])?' value="'.htmlentities($_POST['firstName']).'"':"" ?>></td>
+						<td><input type="text" name="firstName" maxlength="255"<?php echo $value=!empty($_POST['firstName'])?' value="'.htmlentities($_POST['firstName']).'"':"" ?>></td>
 					</tr>
 					<tr>
 						<td>Last Name: </td>
-						<td><input type="text" name="lastName"<?php echo $value=!empty($_POST['lastName'])?' value="'.htmlentities($_POST['lastName']).'"':"" ?>></td>
+						<td><input type="text" name="lastName" maxlength="255"<?php echo $value=!empty($_POST['lastName'])?' value="'.htmlentities($_POST['lastName']).'"':"" ?>></td>
 					</tr>
 					<tr>
-						<td>Email: </td>
-						<td><input type="text" name="email"<?php echo $value=!empty($_POST['email'])?' value="'.htmlentities($_POST['email']).'"':"" ?>></td>
+						<td id="email">Email: </td>
+						<td><input type="text" name="email" maxlength="255"<?php echo $value=!empty($_POST['email'])?' value="'.htmlentities($_POST['email']).'"':"" ?>></td>
 					</tr>
 					<tr>
 						<td>*Password: </td>
-						<td><input type="password" name="password"></td>
+						<td><input type="password" maxlength="255" name="password"></td>
 					</tr>
 					<tr>
 						<td>*Repeat Password: </td>
-						<td><input type="password" name="rPassword"></td>
+						<td><input type="password" maxlength="255" name="rPassword"></td>
 					</tr>
 					<?php
 						if( isset($env['PUBLIC_COMMISSIONER_REG']) && $env['PUBLIC_COMMISSIONER_REG'] === '1' ) { //Show type picker
@@ -90,7 +101,7 @@
 								<tr>
 									<td>Account Type: </td>
 									<td>
-										<select name="userType">
+										<select name="userType" onChange="emailNotice(this.value)">
 											<option <?php echo !empty($_POST['userType'])&&$_POST['userType']==='Client'?'selected="selected"':'';?>>Client</option>
 											<option <?php echo !empty($_POST['userType'])&&$_POST['userType']==='Commissioner'?'selected="selected"':'';?>>Commissioner</option>
 										</select>

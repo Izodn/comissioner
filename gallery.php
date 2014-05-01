@@ -6,6 +6,7 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php'; //Checks login and starts session
 	requireLogin();
+	$userId = $_SESSION['userObj']->getUserId();
 	global $dbh;
 	$imageSize = 150;
 	/*
@@ -44,7 +45,6 @@
 		return '<img width="'.$imageDim['width'].'" height="'.$imageDim['height'].'" src="image.php?n='.str_replace($env['IMAGE_LIB'], '', $img).'">';
 	}
 	if( !empty($_POST) && isset($_GET['u']) && isset($_GET['a']) && ($_SESSION['userObj']->getUserId() === $_GET['u']) ) { //If page submitted and right user
-		//echo dump($_POST);
 		$query = <<<SQL
 SELECT
 	iImageId as imageId,
@@ -62,7 +62,7 @@ WHERE
 	)
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindParam(1, $userId);
 		$runQuery->execute();
 		$results = $runQuery->fetchAll(PDO::FETCH_ASSOC);
 		$images = array();
@@ -91,7 +91,7 @@ SQL;
 				$runQuery = $dbh->prepare($query);
 				$runQuery->bindParam(1, $val);
 				$runQuery->bindParam(2, $key);
-				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(3, $userId);
 				$runQuery->execute();
 			}
 		}
@@ -171,7 +171,7 @@ ORDER BY
 	commissionId DESC
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+					$runQuery->bindParam(1, $userId);
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					$commissions = array();

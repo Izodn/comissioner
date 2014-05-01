@@ -9,8 +9,8 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/money.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/strToInput.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/strToSelect.php';
-	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	requireLogin();
+	$userId = $_SESSION['userObj']->getUserId();
 	if($_SESSION['userObj']->getUserType() === 'superuser' || $_SESSION['userObj']->getUserType() === 'commissioner') {
 		if( isset($_GET['archives']) )
 			$archives = 1;
@@ -53,8 +53,13 @@
 				$links = new links($_SESSION['userObj']);
 				echo $links->getLinks();
 				$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
-				if( !isset($_GET['myCom']) )
-					$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment', 'Archive');
+				if( !isset($_GET['myCom']) ) {
+					$headers = array('Commission ID', 'Title', 'Client Name', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
+					if($archives == 0)
+						$headers[count($headers)] = "Archive";
+					else
+						$headers[count($headers)] = "UnArchive";
+				}
 				else
 					$headers = array('Commission ID', 'Title', 'Commissioner', 'Description', 'Cost', 'Input Time', 'Progress', 'Payment');
 				$progressSelOptions = array();
@@ -68,7 +73,7 @@ WHERE
 	IUSERID = 0
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(1, $userId);
 				$runQuery->execute();
 				while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 					$progressSelOptions[count($progressSelOptions)] = $row['cName'];
@@ -84,7 +89,7 @@ WHERE
 	IUSERID = 0
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(1, $userId);
 				$runQuery->execute();
 				while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 					$paymentSelOptions[count($paymentSelOptions)] = $row['cName'];
@@ -95,7 +100,7 @@ SQL;
 SELECT
 	cc.iCommissionId,
 	cc.cTitle as title,
-	concat(cu.cFirstName,' ',cu.cLastName) as clientName,
+	concat(cu.cLastName,', ',cu.cFirstName) as clientName,
 	cc.cDescription as description,
 	cc.iCost as cost,
 	cc.dCreatedDate as inputTime,
@@ -123,12 +128,30 @@ ORDER BY
 	iCommissionId ASC
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindParam(1, $userId);
 				$runQuery->bindParam(2, $archives);
 				$runQuery->execute();
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
+				$i = 0;
+				foreach($result as $row) {
+					$clientName = $row[2];
+					$tmpClientName = explode(', ', $clientName);
+					if( count($tmpClientName) == 2) { //Make sure we have the right number of indexes
+						//Here's where we'll trim the names to avoid giant select boxes
+						if( strLen($tmpClientName[0]) > 22 ) {
+							$tmpClientName[0] = trim(subStr($tmpClientName[0], 0, 22).'...');
+						}
+						if( strLen($tmpClientName[1]) > 22 ) {
+							$tmpClientName[1] = trim(subStr($tmpClientName[1], 0, 22).'...');
+						}
+						$clientName = implode( $tmpClientName, ', ' );
+					}
+					$result[$i][2] = $clientName;
+					$i++;
+				}
 				$table = new table($headers, $result);
 				$table->setAttr('border',1);
+				$table->setAttr('style','max-width:50%');
 				//START modify each title to link to the unique commission page
 				$tableData = $table->dataArr;
 				foreach($tableData as $keyA=>$valA) {
@@ -139,14 +162,27 @@ SQL;
 				$table->changeData('all', 'Commission ID', 'strToInput', array('hidden', 'commissionId[]'));
 				$table->changeData('all', 'Cost', 'moneyToStr');
 				if( !isset($_GET['myCom']) ) {
-					$table->changeData('all', 'Archive', 'strToInput', array('checkbox', 'archive[]'));
-					$table->changeData('all', 'Progress', 'strToSelect', array('progress[]', $progressSelOptions, 'onChange="form.submit()"'));
-					$table->changeData('all', 'Payment', 'strToSelect', array('payment[]', $paymentSelOptions, 'onChange="form.submit()"'));
+					if( $archives == 0 ) {
+						$table->changeData('all', 'Archive', 'strToInput', array('checkbox', 'archive[]'));
+						$table->changeData('all', 'Progress', 'strToSelect', array('progress[]', $progressSelOptions, 'onChange="form.submit()"'));
+						$table->changeData('all', 'Payment', 'strToSelect', array('payment[]', $paymentSelOptions, 'onChange="form.submit()"'));
+					}
+					else
+						$table->changeData('all', 'UnArchive', 'strToInput', array('checkbox', 'archive[]'));
+					$i = 0;
+					foreach($result as $row) {
+						if( $row[array_search('Progress', $headers)] != 'Finished')
+							$table->changeData($i, 'Archive', 'strToInput', array('checkbox', 'archive[]', '', 'disabled="disabled"'));
+						$i++;
+					}
 				}
 				$table->hideColumn('Commission ID', /*HideHeader*/true, /*HideData*/false, /*ExcludeTh*/true, /*ExcludeTd*/true);
 				echo '<form action="'.htmlentities($_SERVER['REQUEST_URI']).'" method="POST">';
 				echo $table->getTable();
-				echo '<br /><input type="submit" name="archiveBtn" value="Archive Selected">';
+				if( $archives == 0 )
+					echo '<br /><input type="submit" name="archiveBtn" value="Archive Selected">';
+				else
+					echo '<br /><input type="submit" name="archiveBtn" value="UnArchive Selected">';
 				echo '</form>';
 			?>
 		</center>

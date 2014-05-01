@@ -1,6 +1,14 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/environment.php';
 	global $env;
+	if( empty($env['DEVELOPMENT']) || $env['DEVELOPMENT'] !== "1" ) {
+		error_reporting(0);
+		ini_set('display_errors', '0');
+	}
+	else {
+		ini_set('display_errors', '1');
+		error_reporting(-1);
+	}
 	$neededEnv = array('DATABASE_LOCATION','DATABASE','USER','PASS','IMAGE_LIB','UPLOAD_SIZE_LIMIT');
 	$neededEnvLen = count($neededEnv);
 	$needVarsErrMsg = 'The envVars file is missing the following needed variables: ';

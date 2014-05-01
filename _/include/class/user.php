@@ -150,9 +150,10 @@ WHERE
 	CEMAIL = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
+			$newPass = $this->hash_pass($this->password);
 			$runQuery->bindParam(1, $firstName);
 			$runQuery->bindParam(2, $lastName);
-			$runQuery->bindParam(3, $this->hash_pass($this->password));
+			$runQuery->bindParam(3, $newPass);
 			$runQuery->bindParam(4, $type);
 			$runQuery->bindParam(5, $this->email);
 			if(!$runQuery->execute()) {
@@ -243,7 +244,8 @@ WHERE
 	iUserId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->hash_pass($newPass));
+			$newPass = $this->hash_pass($newPass);
+			$runQuery->bindParam(1, $newPass);
 			$runQuery->bindParam(2, $this->userId);
 			$runQuery->execute();
 			$this->password = $newPass;
@@ -263,8 +265,9 @@ WHERE
 	iUserId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
+			$userId = $this->getUserId();
 			$runQuery->bindParam(1, $newEmail);
-			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->bindParam(2, $userId);
 			$runQuery->execute();
 			$this->email = $newEmail;
 			return true;
@@ -303,9 +306,10 @@ INSERT INTO
 VALUES(?, ?, ?, NOW())
 SQL;
 			$runQuery = $dbh->prepare($query);
+			$userId = $this->getUserId();
 			$runQuery->bindParam(1, $name);
 			$runQuery->bindParam(2, $default);
-			$runQuery->bindParam(3, $this->getUserId());
+			$runQuery->bindParam(3, $userId);
 			$runQuery->execute();
 			return true;
 		}
@@ -323,7 +327,8 @@ LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$userId = $this->getUserId();
+			$runQuery->bindParam(1, $userId);
 			$runQuery->bindParam(2, $name);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
@@ -341,7 +346,8 @@ WHERE
 	iIsDefault = 1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$userId = $this->getUserId();
+			$runQuery->bindParam(1, $userId);
 			$runQuery->execute();
 			if(!$result = $runQuery->fetch(PDO::FETCH_NUM))
 				return false;
@@ -360,7 +366,8 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$userId = $this->getUserId();
+			$runQuery->bindParam(1, $userId);
 			$runQuery->execute();
 			//$query changes only the selected one to default
 			$query = <<<SQL
@@ -373,8 +380,9 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
+			$userId = $this->getUserId();
 			$runQuery->bindParam(1, $id);
-			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->bindParam(2, $userId);
 			$runQuery->execute();
 		}
 		function removePaymentOption($id) {
@@ -407,7 +415,8 @@ WHERE
 	IACCOUNTID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$userId = $this->getUserId();
+			$runQuery->bindParam(1, $userId);
 			$runQuery->bindParam(2, $id);
 			$runQuery->execute();
 		}
@@ -423,7 +432,8 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$userId = $this->getUserId();
+			$runQuery->bindParam(1, $userId);
 			$runQuery->execute();
 			return($runQuery->fetchAll());
 		}

@@ -1,6 +1,5 @@
 <?php
 	require_once $_SERVER['DOCUMENT_ROOT'].'/application.php'; //ALWAYS INCLUDE THIS
-	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/dump.php';
 	class table{
 		var $headerArr;
 		var $dataArr;
