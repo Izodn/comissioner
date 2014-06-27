@@ -5,7 +5,8 @@
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/class/commission.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/dbh.php';
 	require_once $_SERVER['DOCUMENT_ROOT'].'/_/include/function/requireLogin.php'; //Checks login and starts session
-	requireLogin();
+	session_start();
+	$userId = isset($_SESSION['userObj']) ? $_SESSION['userObj']->getUserId() : 0;
 	global $dbh;
 	$imageSize = 150;
 	/*
@@ -43,8 +44,7 @@
 		$imageDim['height'] = intval($imageDim['height']);
 		return '<img width="'.$imageDim['width'].'" height="'.$imageDim['height'].'" src="image.php?n='.str_replace($env['IMAGE_LIB'], '', $img).'">';
 	}
-	if( !empty($_POST) && isset($_GET['u']) && isset($_GET['a']) && ($_SESSION['userObj']->getUserId() === $_GET['u']) ) { //If page submitted and right user
-		//echo dump($_POST);
+	if( !empty($_POST) && isset($_GET['u']) && isset($_GET['a']) && isset($_SESSION['userObj']) && ($_SESSION['userObj']->getUserId() === $_GET['u']) ) { //If page submitted and right user
 		$query = <<<SQL
 SELECT
 	iImageId as imageId,
@@ -97,9 +97,9 @@ SQL;
 		}
 		header('Location: '.$_SERVER['REQUEST_URI']); //Redirect to same page after update to stop page submit on F5
 	}
-	if( isset($_GET['u']) && isset($_GET['a']) && ($_SESSION['userObj']->getUserId() !== $_GET['u']) ) //Make sure the ids are the same
+	if( isset($_GET['u']) && isset($_GET['a']) && (!isset($_SESSION['userObj']) || ($_SESSION['userObj']->getUserId() !== $_GET['u'])) ) //Make sure the ids are the same
 		header('Location: '.$_SERVER['PHP_SELF'].'?u='.$_GET['u']); //Route to same page without admin flag
-	if( isset($_GET['c']) ) {
+	if( isset($_GET['c']) && isset($_SESSION['userObj'])) {
 		$commission = new commission($_GET['c']);
 		if( $commission->clientId !== $_SESSION['userObj']->getUserId() && $commission->commissionerId !== $_SESSION['userObj']->getUserId() ) {
 			$badUserId = true;
@@ -115,8 +115,10 @@ SQL;
 	<body>
 		<center>
 			<?php
-				$links = new links($_SESSION['userObj']);
-				echo $links->getLinks();
+				if( isset($_SESSION['userObj'])  ) {
+					$links = new links($_SESSION['userObj']);
+					echo $links->getLinks();
+				}
 				if( isset($_GET['u']) && !isset($_GET['a'])) { //Public non-admin gallery
 					$query = <<<SQL
 SELECT
