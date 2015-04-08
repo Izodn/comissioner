@@ -141,7 +141,7 @@
 		</center>
 	</body>
 </html>
-<?
+<?php
 	}
 	else {
 		//Type not handled, this is bad.
