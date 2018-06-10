@@ -62,7 +62,7 @@ WHERE
 	)
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 		$runQuery->execute();
 		$results = $runQuery->fetchAll(PDO::FETCH_ASSOC);
 		$images = array();
@@ -89,9 +89,9 @@ WHERE
 	)
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $val);
-				$runQuery->bindParam(2, $key);
-				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $val);
+				$runQuery->bindValue(2, $key);
+				$runQuery->bindValue(3, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 			}
 		}
@@ -133,7 +133,7 @@ ORDER BY
 	imageId DESC
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $_GET['u']);
+					$runQuery->bindValue(1, $_GET['u']);
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					$images = array();
@@ -173,7 +173,7 @@ ORDER BY
 	commissionId DESC
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+					$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					$commissions = array();

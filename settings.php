@@ -64,7 +64,7 @@ WHERE
 	IUSERID = ?
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 		$runQuery->execute();
 		?>
 		<h3>Payment Options</h3>
@@ -91,7 +91,7 @@ WHERE
 	iAccountId = ?
 SQL;
 							$runCaQuery = $dbh->prepare($caQuery);
-							$runCaQuery->bindParam(1, $row['IACCOUNTID']);
+							$runCaQuery->bindValue(1, $row['IACCOUNTID']);
 							$runCaQuery->execute();
 							$caResult = $runCaQuery->fetch(PDO::FETCH_ASSOC);
 							if( $caResult['comCount'] === '0')
@@ -142,7 +142,7 @@ WHERE
 	IUSERID = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 				if( password_verify($_POST['oldPass'], $result['CPASSWORD']) ) {

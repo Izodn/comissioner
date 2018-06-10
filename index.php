@@ -23,7 +23,7 @@ LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $_GET['autoFill']);
+			$runQuery->bindValue(1, $_GET['autoFill']);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			$autoFill = array(
@@ -43,7 +43,7 @@ LIMIT
 	0,1
 SQL;
 		$runQuery = $dbh->prepare($query);
-		$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+		$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 		$runQuery->execute();
 		$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 		if( $result['IACCOUNTID'] == null ) { //If no payment options go to settings page
@@ -75,12 +75,12 @@ INSERT INTO
 VALUES(?, ?, (SELECT IUSERID FROM COM_USER WHERE CEMAIL = ?), ?, ?, ?, 1, 1, 0, NOW())
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_POST['title']);
-				$runQuery->bindParam(2, $description);
-				$runQuery->bindParam(3, $_POST['email']);
-				$runQuery->bindParam(4, $_SESSION['userObj']->getUserId());
-				$runQuery->bindParam(5, $cost); //Use already formatted cost var
-				$runQuery->bindParam(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
+				$runQuery->bindValue(1, $_POST['title']);
+				$runQuery->bindValue(2, $description);
+				$runQuery->bindValue(3, $_POST['email']);
+				$runQuery->bindValue(4, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(5, $cost); //Use already formatted cost var
+				$runQuery->bindValue(6, $_SESSION['userObj']->getPaymentId($_POST['paymentOption']));
 				if(!$runQuery->execute())
 					$errMsg = "Could not submit commission...";
 				else
@@ -121,7 +121,7 @@ ORDER BY
 	clientName ASC
 SQL;
 						$runQuery = $dbh->prepare($query);
-						$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+						$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 						$runQuery->execute();
 						while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 							//I don't think we need to hide these emails as they were given to the commissioner initially.
@@ -227,7 +227,7 @@ WHERE
 	cc.iClientId = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
 				$table = new table($headers, $result);

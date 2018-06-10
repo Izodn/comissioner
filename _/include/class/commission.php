@@ -70,7 +70,7 @@ WHERE
 	cc.iCommissionId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $id);
+			$runQuery->bindValue(1, $id);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if($result['commissionCount'] === '0') {
@@ -106,7 +106,7 @@ WHERE
 	iCommissionId = ?
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $id);
+					$runQuery->bindValue(1, $id);
 					$runQuery->execute();
 					$results = $runQuery->fetchall(PDO::FETCH_ASSOC);
 					foreach($results as $key=>$val) {
@@ -133,8 +133,8 @@ WHERE
 	)
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $statusName);
-			$runQuery->bindParam(2, $this->userId);
+			$runQuery->bindValue(1, $statusName);
+			$runQuery->bindValue(2, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['rowCount'] !== '0' ) { //Should only get 1 anyway, they're going to be unique
@@ -151,8 +151,8 @@ WHERE
 	ICOMMISSIONID = ?
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $desiredId);
-					$runQuery->bindParam(2, $this->commissionId);
+					$runQuery->bindValue(1, $desiredId);
+					$runQuery->bindValue(2, $this->commissionId);
 					$runQuery->execute();
 				}
 				else {
@@ -180,8 +180,8 @@ WHERE
 	)
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $statusName);
-			$runQuery->bindParam(2, $this->userId);
+			$runQuery->bindValue(1, $statusName);
+			$runQuery->bindValue(2, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['rowCount'] !== '0' ) { //Should only get 1 anyway, they're going to be unique
@@ -198,8 +198,8 @@ WHERE
 	ICOMMISSIONID = ?
 SQL;
 					$runQuery = $dbh->prepare($query);
-					$runQuery->bindParam(1, $desiredId);
-					$runQuery->bindParam(2, $this->commissionId);
+					$runQuery->bindValue(1, $desiredId);
+					$runQuery->bindValue(2, $this->commissionId);
 					$runQuery->execute();
 				}
 				else {
@@ -224,7 +224,7 @@ WHERE
 	iCommissionId = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $this->commissionId);
+				$runQuery->bindValue(1, $this->commissionId);
 				$runQuery->execute();
 			}
 		}
@@ -241,7 +241,7 @@ WHERE
 	iCommissionId = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $this->commissionId);
+				$runQuery->bindValue(1, $this->commissionId);
 				$runQuery->execute();
 			}
 		}
@@ -257,8 +257,8 @@ WHERE
 	iCommissionId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $newTitle);
-			$runQuery->bindParam(2, $this->commissionId);
+			$runQuery->bindValue(1, $newTitle);
+			$runQuery->bindValue(2, $this->commissionId);
 			if(!$runQuery->execute()) {
 				$this->error = TITLE_CHANGE_FAIL;
 				return false;
@@ -324,9 +324,9 @@ INSERT INTO COM_IMAGES(cLocation,iCommissionId,iUserId,dCreatedDate)
 VALUES(?, ?, ?, NOW())
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $fullPath);
-				$runQuery->bindParam(2, $this->commissionId);
-				$runQuery->bindParam(3, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $fullPath);
+				$runQuery->bindValue(2, $this->commissionId);
+				$runQuery->bindValue(3, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				/*
 				*	MAY WANT TO __construct($this->commissionId) HERE

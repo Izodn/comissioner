@@ -68,7 +68,7 @@ WHERE
 	IUSERID = 0
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 					$progressSelOptions[count($progressSelOptions)] = $row['cName'];
@@ -84,7 +84,7 @@ WHERE
 	IUSERID = 0
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
 				$runQuery->execute();
 				while($row = $runQuery->fetch(PDO::FETCH_ASSOC)) {
 					$paymentSelOptions[count($paymentSelOptions)] = $row['cName'];
@@ -123,8 +123,8 @@ ORDER BY
 	iCommissionId ASC
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $_SESSION['userObj']->getUserId());
-				$runQuery->bindParam(2, $archives);
+				$runQuery->bindValue(1, $_SESSION['userObj']->getUserId());
+				$runQuery->bindValue(2, $archives);
 				$runQuery->execute();
 				$result = $runQuery->fetchall(PDO::FETCH_NUM);
 				$table = new table($headers, $result);

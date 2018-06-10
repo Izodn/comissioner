@@ -42,7 +42,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->userId);
+			$runQuery->bindValue(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cFirstName'];
@@ -58,7 +58,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->userId);
+			$runQuery->bindValue(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cLastName'];
@@ -74,7 +74,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->userId);
+			$runQuery->bindValue(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cEmail'];
@@ -90,7 +90,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->userId);
+			$runQuery->bindValue(1, $this->userId);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['cUserType'];
@@ -111,7 +111,7 @@ LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->email);
+			$runQuery->bindValue(1, $this->email);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" && password_verify($this->password, $result['cPassword'])) {
@@ -125,7 +125,7 @@ WHERE
 	IUSERID = ?
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $this->userId);
+				$runQuery->bindValue(1, $this->userId);
 				$runQuery->execute();
 				return true;
 			}
@@ -150,11 +150,11 @@ WHERE
 	CEMAIL = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $firstName);
-			$runQuery->bindParam(2, $lastName);
-			$runQuery->bindParam(3, $this->hash_pass($this->password));
-			$runQuery->bindParam(4, $type);
-			$runQuery->bindParam(5, $this->email);
+			$runQuery->bindValue(1, $firstName);
+			$runQuery->bindValue(2, $lastName);
+			$runQuery->bindValue(3, $this->hash_pass($this->password));
+			$runQuery->bindValue(4, $type);
+			$runQuery->bindValue(5, $this->email);
 			if(!$runQuery->execute()) {
 				$this->errMsg = SOMETHING_BROKE;
 				return false;
@@ -181,7 +181,7 @@ LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->email);
+			$runQuery->bindValue(1, $this->email);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
@@ -206,13 +206,13 @@ INSERT INTO
 VALUES (?, ?, ?, ?, ?, NOW(), ?)
 SQL;
 				$runQuery = $dbh->prepare($query);
-				$runQuery->bindParam(1, $firstName);
-				$runQuery->bindParam(2, $lastName);
-				$runQuery->bindParam(3, $this->email);
+				$runQuery->bindValue(1, $firstName);
+				$runQuery->bindValue(2, $lastName);
+				$runQuery->bindValue(3, $this->email);
 				//If password is null (created via commission entry), pass '' instead of attempting to hash
-				$runQuery->bindParam(4, $pass);
-				$runQuery->bindParam(5, $type);
-				$runQuery->bindParam(6, $isActive);
+				$runQuery->bindValue(4, $pass);
+				$runQuery->bindValue(5, $type);
+				$runQuery->bindValue(6, $isActive);
 				$runQuery->execute();
 				if($autoLogin === true) {
 					if(!$this->doLogin()) {
@@ -243,8 +243,8 @@ WHERE
 	iUserId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->hash_pass($newPass));
-			$runQuery->bindParam(2, $this->userId);
+			$runQuery->bindValue(1, $this->hash_pass($newPass));
+			$runQuery->bindValue(2, $this->userId);
 			$runQuery->execute();
 			$this->password = $newPass;
 		}
@@ -263,8 +263,8 @@ WHERE
 	iUserId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $newEmail);
-			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->bindValue(1, $newEmail);
+			$runQuery->bindValue(2, $this->getUserId());
 			$runQuery->execute();
 			$this->email = $newEmail;
 			return true;
@@ -285,7 +285,7 @@ WHERE
 	cEmail = ?
 SQL;
 			$runQuery =  $dbh->prepare($query);
-			$runQuery->bindParam(1, $email);
+			$runQuery->bindValue(1, $email);
 			$runQuery->execute();
 			$result = $runQuery->fetchall(PDO::FETCH_NUM);
 			if( $result[0][0] !== '0' ) { //If email is in use
@@ -303,9 +303,9 @@ INSERT INTO
 VALUES(?, ?, ?, NOW())
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $name);
-			$runQuery->bindParam(2, $default);
-			$runQuery->bindParam(3, $this->getUserId());
+			$runQuery->bindValue(1, $name);
+			$runQuery->bindValue(2, $default);
+			$runQuery->bindValue(3, $this->getUserId());
 			$runQuery->execute();
 			return true;
 		}
@@ -323,8 +323,8 @@ LIMIT
 	0,1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
-			$runQuery->bindParam(2, $name);
+			$runQuery->bindValue(1, $this->getUserId());
+			$runQuery->bindValue(2, $name);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			return $result['IACCOUNTID'];
@@ -341,7 +341,7 @@ WHERE
 	iIsDefault = 1
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindValue(1, $this->getUserId());
 			$runQuery->execute();
 			if(!$result = $runQuery->fetch(PDO::FETCH_NUM))
 				return false;
@@ -360,7 +360,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindValue(1, $this->getUserId());
 			$runQuery->execute();
 			//$query changes only the selected one to default
 			$query = <<<SQL
@@ -373,8 +373,8 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $id);
-			$runQuery->bindParam(2, $this->getUserId());
+			$runQuery->bindValue(1, $id);
+			$runQuery->bindValue(2, $this->getUserId());
 			$runQuery->execute();
 		}
 		function removePaymentOption($id) {
@@ -392,7 +392,7 @@ WHERE
 	iAccountId = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $id);
+			$runQuery->bindValue(1, $id);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
 			if($result['comCount'] !== '0') { //Can't delete payment options in use
@@ -407,8 +407,8 @@ WHERE
 	IACCOUNTID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
-			$runQuery->bindParam(2, $id);
+			$runQuery->bindValue(1, $this->getUserId());
+			$runQuery->bindValue(2, $id);
 			$runQuery->execute();
 		}
 		function getPaymentOptions() {
@@ -423,7 +423,7 @@ WHERE
 	IUSERID = ?
 SQL;
 			$runQuery = $dbh->prepare($query);
-			$runQuery->bindParam(1, $this->getUserId());
+			$runQuery->bindValue(1, $this->getUserId());
 			$runQuery->execute();
 			return($runQuery->fetchAll());
 		}
