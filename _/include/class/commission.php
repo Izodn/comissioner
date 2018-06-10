@@ -68,6 +68,25 @@ LEFT JOIN
 	COM_IMAGES ci ON ci.iCommissionId = cc.iCommissionId
 WHERE
 	cc.iCommissionId = ?
+GROUP BY
+	cc.cTitle,
+	cc.cDescription,
+	cu1.cFirstName,
+	cu1.cLastName,
+	cu1.cEmail,
+	cu2.cFirstName,
+	cu2.cLastName,
+	cu2.cEmail,
+	cc.iCost,
+	ca.cName,
+	cc.dCreatedDate,
+	cpr.cName,
+	cpa.cName,
+	cc.iProgressStatusId,
+	cc.iPaymentStatusId,
+	cc.iIsArchived,
+	cc.iCommissionerId,
+	cc.iClientId
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindValue(1, $id);
@@ -131,6 +150,7 @@ WHERE
 		IUSERID = 0 OR
 		IUSERID = ?
 	)
+GROUP BY iStatusId
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindValue(1, $statusName);
@@ -178,6 +198,7 @@ WHERE
 		IUSERID = 0 OR
 		IUSERID = ?
 	)
+GROUP BY iStatusId
 SQL;
 			$runQuery = $dbh->prepare($query);
 			$runQuery->bindValue(1, $statusName);

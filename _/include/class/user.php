@@ -107,6 +107,11 @@ FROM
 	COM_USER
 WHERE
 	cEmail = ?
+GROUP BY
+	iIsActive,
+	cPassword,
+	iUserId,
+	cEmail
 LIMIT
 	0,1
 SQL;
@@ -177,6 +182,10 @@ FROM
 	COM_USER
 WHERE
 	cEmail = ?
+GROUP BY
+	cPassword,
+	iIsActive,
+	cEmail
 LIMIT
 	0,1
 SQL;
