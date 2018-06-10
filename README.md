@@ -4,8 +4,8 @@ commissioner
 A simple commission website for artists.
 
 
-Requirements:
-  PHP 5.3 +, PHP PDO, Apache 2.2.22 +, and MySQL 5.5.29 +
+Requirements (Read "Developed using"):
+  PHP 7.0, PHP PDO, PDO MySQL, Nginx 1.10, and MySQL 5.7
 
 How to setup:
   1. Copy files into web root of server
