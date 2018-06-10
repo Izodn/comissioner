@@ -193,7 +193,7 @@ SQL;
 			$runQuery->bindValue(1, $this->email);
 			$runQuery->execute();
 			$result = $runQuery->fetch(PDO::FETCH_ASSOC);
-			if( $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
+			if(!empty($result) && $result['foundUser'] === "1" && $fromComInput === false) { //if a user was found and not from commission input
 				if($result['cPassword'] === null && $result['iIsActive'] === '0') { //User was added via commission-input
 					$this->doClaim($firstName, $lastName, $type); //Claim user
 					if(!$this->doLogin()) {
@@ -207,7 +207,7 @@ SQL;
 					return false;
 				}
 			}
-			elseif($result['foundUser'] === '0') { //Only if no users found
+			elseif(empty($result) || $result['foundUser'] === '0') { //Only if no users found
 				$pass = $this->password === null ? null : $this->hash_pass($this->password);
 				$query = <<<SQL
 INSERT INTO
